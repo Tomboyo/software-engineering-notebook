@@ -1,0 +1,27 @@
+plugins {
+	id 'java'
+	id 'application'
+}
+
+group = 'com.github.tomboyo'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '14'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation platform('io.github.resilience4j:resilience4j-bom:1.5.0')
+	implementation 'io.github.resilience4j:resilience4j-circuitbreaker'
+
+	implementation 'org.slf4j:slf4j-simple:1.7.30'
+}
+
+test {
+	useJUnitPlatform()
+}
+
+application {
+	mainClass = 'com.github.tomboyo.faultyservice.Client'
+}
