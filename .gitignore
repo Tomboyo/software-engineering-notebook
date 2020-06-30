@@ -1,3 +1,10 @@
+.classpath
 .gitignore.swp
+.project
+.settings
+
 .gradle/
+.vscode/
+
 build/
+bin/

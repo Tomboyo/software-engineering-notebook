@@ -1,0 +1,95 @@
+= Fault Tolerance Exercise
+
+== Circuit Breaker with Resilience4j
+
+In this exercise we use a _circuit breaker_ to protect an HTTP call to an underlying service. Circuit breakers are a tool to shed load from struggling subsystems, decrease latency of requests by failing fast, introduce subsystem monitoring, and give operations teams granular control over system interactions <<Fowler>><<Netflix>>.
+
+A circuit breaker is essentially a protective sleeve around a function call. Clients make requests to the breaker instead of to the protected function, and then the breaker selectively chooses to forward those requests on to the protected function. If the function becomes unresponsive or erroneous, the breaker may "trip" and refuse to forward subsequent requests.
+
+In this way a breaker can reduce load on strained subsystems accessed by its protected call. This not only gives the strained subsystem an opportunity to recover <<Fowler>><<Netflix>>, it also prevents the client from potentially dedicating resources to a slow subsystem <<Fowler>><<Netflix>>, allowing those resources to be used for productive work. The client of a tripped breaker may furthermore fall back on secondary measures (e.g cached data or default values); while not ideal, this ensures end-users receive usable data within an acceptable window of time <<Netflix>>.
+
+A circuit breaker may generate logs, alerts, or other diagnostics when it is tripped, informing operators of possible system degradation, and may even expose an interface to operators which allows them to manually toggle the breaker between states for troubleshooting <<Fowler>>.
+
+This exercise uses the https://github.com/resilience4j/resilience4j[resilience4j] library to implement a protected HTTP request. Resilience4j is inspired by Netflix's similar https://github.com/Netflix/Hystrix[Hystrix] library, which is no longer actively maintained.
+
+=== Setup
+
+This exercise consists of two parts: the Faulty Service and the Client. The Faulty Service is a small Spring web application that responds to `GET localhost:8080/` requests after a configured delay. Once started, the Client issues one `GET localhost:8080/` request every second, but protects the HTTP call with a circuit breaker. The breaker is configured to trip into the `open` state and deny requests after a single slow response taking at least 1500 ms from the protected call. It remains `open` for five seconds, after which time it will transition to `half-open` and allow a single probe request through. If the probe is still unhealthy, the breaker returns to the `open` state and continues to deny requests. Otherwise it will `close` and allow all requests through until another slow response trips the breaker.
+
+The user may reconfigure the delay of the Faulty Service's `GET localhost:8080/` endpoint at any time by submitting a JSON request to `POST localhost:8080/`. This lets the user exercise the capabilities of the Client's circuit breaker, as demonstrated below.
+
+=== Guided Demonstration
+
+In one terminal, start the Faulty Service:
+[source, bash]
+----
+./gradlew faulty-service:bootRun
+----
+
+In another terminal, start the Client:
+[source, bash]
+----
+./gradlew client:run
+----
+
+The Client's circuit breaker is initially in the `closed` state and will therefore issue `GET localhost:8080/` requests to Faulty Service. Faulty Service responds after a 1000 ms delay by default, which the Client considers to be a healthy response time. As such, the following healthy logs are initially printed:
+
+----
+...
+[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 1015 ms
+[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 1019 ms
+...
+----
+
+
+If we make the following POST request, the Faulty Service will not respond to requests until after 2000 ms, which is slower than the Client considers to be healthy:
+
+----
+curl localhost:8080/ -H 'Content-Type: application/json' -d '{"delay_millis": 2000}'
+----
+
+As a result, the Client's circuit breaker will trip into the `open` state and deny subsequent requests to the protected HTTP GET method. At this point, Faulty Service is no longer receiving traffic.
+
+----
+[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 2010 ms
+[main] INFO com.github.tomboyo.faultyservice.Client - Breaker breaker-1 transition: CLOSED -> OPEN
+[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
+[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
+[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
+[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
+----
+
+After an interval, however, the breaker will transition to the `half-open` state. It will allow one request through to the protected HTTP method in order to assess the health of the underlying service. If Faulty Service is left as we have configured it, the probe request will take a little over 2000 ms and again trip the breaker into the `open` state.
+
+----
+[main] INFO com.github.tomboyo.faultyservice.Client - Breaker breaker-1 transition: OPEN -> HALF_OPEN
+[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 2014 ms
+[main] INFO com.github.tomboyo.faultyservice.Client - Breaker breaker-1 transition: HALF_OPEN -> OPEN
+----
+
+However, if we reconfigure Faulty Service to respond after a short 100 ms delay,
+
+[source, bash]
+----
+curl localhost:8080/ -H 'Content-Type: application/json' -d '{"delay_millis": 100}'
+----
+
+then when the breaker next enters the `half-open` state, the probe request will resolve quickly and the breaker will transition into the `closed` state. In this state, all requests to the breaker's protected HTTP method are made. Faulty Service now receives 100% of attempted traffic.
+
+----
+[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
+[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
+[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
+[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
+[main] INFO com.github.tomboyo.faultyservice.Client - Breaker breaker-1 transition: OPEN -> HALF_OPEN
+[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 108 ms
+[main] INFO com.github.tomboyo.faultyservice.Client - Breaker breaker-1 transition: HALF_OPEN -> CLOSED
+[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 109 ms
+[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 108 ms
+...
+----
+
+[bibliography]
+= References
+- [[[Fowler, 1]]] M. Fowler. "CircuitBreaker." martinFowler.com. https://www.martinfowler.com/bliki/CircuitBreaker.html (accessed June 29, 2020).
+- [[[Netflix, 2]]] B. Christensen. "Fault tolerance in a high volume, distributed system." The Netflix Tech Blog. https://netflixtechblog.com/fault-tolerance-in-a-high-volume-distributed-system-91ab4faae74a (accessed June 29, 2020).
