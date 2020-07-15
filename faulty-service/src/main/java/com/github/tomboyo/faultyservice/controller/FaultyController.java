@@ -5,8 +5,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,7 +32,7 @@ public class FaultyController {
     private AtomicReference<Configuration> config;
 
     public FaultyController() {
-        config = new AtomicReference<>(new Configuration(1_000));
+        config = new AtomicReference<>(new Configuration(200));
     }
 
     @PostMapping("/")
@@ -51,7 +49,7 @@ public class FaultyController {
     }
 
     @GetMapping("/")
-    public String serve() throws InterruptedException {
+    public String ping() throws InterruptedException {
         Thread.sleep(config.get().delayMillis());
         return "Ok";
     }

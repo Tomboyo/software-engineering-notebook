@@ -1,6 +1,12 @@
-= Fault Tolerance Exercise
+= Fault Tolerance Exercises with Resilience4J
 
-== Circuit Breaker with Resilience4j
+This is a study project to learn about distributed fault-tolerance mechanisms that equip services with automatic failure detection and recovery mechanisms.
+
+We are beginning with the https://github.com/resilience4j/resilience4j[resilience4j] Java library, which implements a number of useful mechanisms like circuit breakers, bulkheads, and retry mechanisms. Resilience4j is inspired by Netflix's https://github.com/Netflix/Hystrix[Hystrix] library, which is no longer actively maintained but curates similar configuration-based mechanisms.
+
+We note that Hystrix is in maintenance mode because Netflix is now researching https://medium.com/@NetflixTechBlog/performance-under-load-3e6fa9a60581[adaptive concurrency limits] (as stated in the Hystrix readme) that adapt in real-time to subsystem performance and rely less on up-front configuration.
+
+== Circuit Breakers
 
 In this exercise we use a _circuit breaker_ to protect an HTTP call to an underlying service. Circuit breakers are a tool to shed load from struggling subsystems, decrease latency of requests by failing fast, introduce subsystem monitoring, and give operations teams granular control over system interactions <<Fowler>><<Netflix>>.
 
@@ -10,15 +16,36 @@ In this way a breaker can reduce load on strained subsystems accessed by its pro
 
 A circuit breaker may generate logs, alerts, or other diagnostics when it is tripped, informing operators of possible system degradation, and may even expose an interface to operators which allows them to manually toggle the breaker between states for troubleshooting <<Fowler>>.
 
-This exercise uses the https://github.com/resilience4j/resilience4j[resilience4j] library to implement a protected HTTP request. Resilience4j is inspired by Netflix's similar https://github.com/Netflix/Hystrix[Hystrix] library, which is no longer actively maintained.
+The following sections demonstrate these capabilities of the circuit breaker.
 
-=== Setup
+=== Design
 
-This exercise consists of two parts: the Faulty Service and the Client. The Faulty Service is a small Spring web application that responds to `GET localhost:8080/` requests after a configured delay. Once started, the Client issues one `GET localhost:8080/` request every second, but protects the HTTP call with a circuit breaker. The breaker is configured to trip into the `open` state and deny requests after a single slow response taking at least 1500 ms from the protected call. It remains `open` for five seconds, after which time it will transition to `half-open` and allow a single probe request through. If the probe is still unhealthy, the breaker returns to the `open` state and continues to deny requests. Otherwise it will `close` and allow all requests through until another slow response trips the breaker.
+This exercise consists of two spring applications: the Faulty Service and the Client. The Faulty Service responds to Http requests after a configurable delay (see FaultyController.java). The Client issues those requests once every second, but protects the HTTP call with a circuit breaker (see Requester.java).
 
-The user may reconfigure the delay of the Faulty Service's `GET localhost:8080/` endpoint at any time by submitting a JSON request to `POST localhost:8080/`. This lets the user exercise the capabilities of the Client's circuit breaker, as demonstrated below.
+The breaker is configured to trip into the `OPEN` state and deny requests after a single slow or erroneous response from the protected call. It will remain `OPEN` for a while and deny subsequent requests, then transition to `HALF-OPEN` and allow a single probe request through. If the probe is still unhealthy, the breaker returns to the `OPEN` state and continues to deny requests. Otherwise it will `CLOSE` and allow all requests through until another slow response trips the breaker. The breaker configuration is defined in the `client/src/main/resources/application.yaml` file by the `resilience4j.circuitbreaker` element.
 
-=== Guided Demonstration
+The user may reconfigure the delay of the Faulty Service's `GET localhost:8080/` endpoint at any time by submitting a JSON request to `POST localhost:8080/`:
+
+[source, bash]
+----
+curl localhost:8080/ -H 'Content-Type: application/json' -d '{"delay_millis": 2000}'
+----
+This lets the user trip the circuit breaker. The breaker may also be tripped by stopping the FaultyService.
+
+The Client registers event listeners with the breaker (see Requester.java) to print diagnostic information in response to important events, such as when the breaker changes state.
+
+The resilience4j team is, as of 2020-July-11, https://github.com/resilience4j/resilience4j/pull/1038[working on Spring Boot Actuator support] to expose circuit breaker state transitions to operators via a REST API. This has not yet been released, but will allow operators to manually change the state of a circuit breaker to one of the `FORCED_OPEN`, `DISABLED`, or `CLOSED` states. While `FORCED_OPEN`, a breaker will deny all traffic. While `DISABLED`, the breaker will instead allow all traffic. In either case the breaker will not change state on its own and must be forced `CLOSED` to resume normal operation. Until the actuator endpoint is released, though, we have replicated this behavior with a simple controller endpoint (see CircuitBreakerController.java). It defines a '/circuitbreakers/faultyservice-ping' POST handler that will allow the user to force the state with a call like the following:
+
+[source, bash]
+----
+curl localhost:8081/circuitbreakers/faultyservice-ping -H 'Content-Type: application/json' -d '{"updateState": "CLOSED"}'
+----
+
+NOTE: Both FaultyService and the Client expose REST APIs. To avoid collisions, FaultyService listens to port 8080, and Client listens to port 8081.
+
+=== Demos
+
+==== Basic circuitbreaker state changes
 
 In one terminal, start the Faulty Service:
 [source, bash]
@@ -32,39 +59,44 @@ In another terminal, start the Client:
 ./gradlew client:run
 ----
 
-The Client's circuit breaker is initially in the `closed` state and will therefore issue `GET localhost:8080/` requests to Faulty Service. Faulty Service responds after a 1000 ms delay by default, which the Client considers to be a healthy response time. As such, the following healthy logs are initially printed:
+The Client's circuit breaker is initially in the `CLOSED` state and will therefore issue `GET localhost:8080/` requests to Faulty Service. Faulty Service responds after a 200 ms delay by default, which the Client considers to be a healthy response time. As such, the following healthy logs are initially printed:
 
 ----
 ...
-[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 1015 ms
-[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 1019 ms
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 214 ms
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 213 ms
 ...
 ----
 
 
-If we make the following POST request, the Faulty Service will not respond to requests until after 2000 ms, which is slower than the Client considers to be healthy:
+If we make the following POST request, the Faulty Service will not respond to requests until after 700 ms, which is slower than the Client considers to be healthy:
 
 ----
-curl localhost:8080/ -H 'Content-Type: application/json' -d '{"delay_millis": 2000}'
+curl localhost:8080/ -H 'Content-Type: application/json' -d '{"delay_millis": 700}'
 ----
 
 As a result, the Client's circuit breaker will trip into the `open` state and deny subsequent requests to the protected HTTP GET method. At this point, Faulty Service is no longer receiving traffic.
 
 ----
-[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 2010 ms
-[main] INFO com.github.tomboyo.faultyservice.Client - Breaker breaker-1 transition: CLOSED -> OPEN
-[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
-[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
-[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
-[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
+...
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Breaker faultyservice-ping transition: CLOSED -> OPEN
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 711 ms
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
 ----
 
-After an interval, however, the breaker will transition to the `half-open` state. It will allow one request through to the protected HTTP method in order to assess the health of the underlying service. If Faulty Service is left as we have configured it, the probe request will take a little over 2000 ms and again trip the breaker into the `open` state.
+NOTE: The Requester logs round-trip time (`Call OK in ...`) _after_ the request to the breaker is evaluated, so transition events (`transition: CLOSED -> OPEN`) are logged before the elapsed time.
+
+After an interval, however, the breaker will transition to the `HALF-OPEN` state. It will allow one request through to the protected HTTP method in order to assess the health of the underlying service. If Faulty Service is left as we have configured it, the probe request will take a little over 700 ms and again trip the breaker into the `OPEN` state.
 
 ----
-[main] INFO com.github.tomboyo.faultyservice.Client - Breaker breaker-1 transition: OPEN -> HALF_OPEN
-[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 2014 ms
-[main] INFO com.github.tomboyo.faultyservice.Client - Breaker breaker-1 transition: HALF_OPEN -> OPEN
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Breaker faultyservice-ping transition: OPEN -> HALF_OPEN
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Breaker faultyservice-ping transition: HALF_OPEN -> OPEN
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 710 ms
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
 ----
 
 However, if we reconfigure Faulty Service to respond after a short 100 ms delay,
@@ -74,22 +106,118 @@ However, if we reconfigure Faulty Service to respond after a short 100 ms delay,
 curl localhost:8080/ -H 'Content-Type: application/json' -d '{"delay_millis": 100}'
 ----
 
-then when the breaker next enters the `half-open` state, the probe request will resolve quickly and the breaker will transition into the `closed` state. In this state, all requests to the breaker's protected HTTP method are made. Faulty Service now receives 100% of attempted traffic.
+then when the breaker next enters the `HALF-OPEN` state, the probe request will resolve quickly and the breaker will transition into the `CLOSED` state. In this state, all requests to the breaker's protected HTTP method are made. Faulty Service now receives 100% of attempted traffic.
 
 ----
-[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
-[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
-[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
-[main] INFO com.github.tomboyo.faultyservice.Client - Call not permitted (open)
-[main] INFO com.github.tomboyo.faultyservice.Client - Breaker breaker-1 transition: OPEN -> HALF_OPEN
-[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 108 ms
-[main] INFO com.github.tomboyo.faultyservice.Client - Breaker breaker-1 transition: HALF_OPEN -> CLOSED
-[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 109 ms
-[main] INFO com.github.tomboyo.faultyservice.Client - Call OK in 108 ms
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Breaker faultyservice-ping transition: OPEN -> HALF_OPEN
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Breaker faultyservice-ping transition: HALF_OPEN -> CLOSED
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 108 ms
 ...
 ----
 
+==== Circuitbreaker operations REST API
+
+In one terminal, start the Faulty Service:
+[source, bash]
+----
+./gradlew faulty-service:bootRun
+----
+
+In another terminal, start the Client:
+[source, bash]
+----
+./gradlew client:run
+----
+
+As before, the Faulty Service is initially healthy, and so we should see output like the following:
+
+----
+...
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 206 ms
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 208 ms
+...
+----
+
+If we wish to stop all traffic through the breaker nonetheless, however, we can issue a POST request to the operations endpoint and put the breaker in the `FORCED_OPEN` state:
+
+[source, bash]
+----
+curl localhost:8081/circuitbreakers/faultyservice-ping -H 'Content-Type: application/json' -d '{"updateState": "FORCED_OPEN"}'
+----
+
+At this point, every request to the circuit breaker will resolve in a CallNotPermitted error, and so the Requester will log errors until we change the breaker state again:
+
+----
+...
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 207 ms
+INFO  [reactor-http-epoll-4] com.github.tomboyo.faultyservice.Requester: Breaker faultyservice-ping transition: CLOSED -> FORCED_OPEN
+INFO  [reactor-http-epoll-4] com.github.tomboyo.faultyservice.CircuitBreakerController: Forced FaultyService::ping breaker state to FORCED_OPEN
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is FORCED_OPEN and does not permit further calls
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is FORCED_OPEN and does not permit further calls
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is FORCED_OPEN and does not permit further calls
+----
+
+We could next force the breaker into the `DISABLED` state:
+
+[source, bash]
+----
+curl localhost:8081/circuitbreakers/faultyservice-ping -H 'Content-Type: application/json' -d '{"updateState": "DISABLED"}'
+----
+
+This will allow requests through no matter what, and so the requester should go back to logging `Call OK` lines.
+
+----
+INFO  [reactor-http-epoll-5] com.github.tomboyo.faultyservice.Requester: Breaker faultyservice-ping transition: FORCED_OPEN -> DISABLED
+INFO  [reactor-http-epoll-5] com.github.tomboyo.faultyservice.CircuitBreakerController: Forced FaultyService::ping breaker state to DISABLED
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 227 ms
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 207 ms
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 205 ms
+----
+
+But if we then instruct the Faulty Service to take a long time to respond,
+
+[source, bash]
+----
+curl localhost:8080/ -H 'Content-Type: application/json' -d '{"delay_millis": 700}'
+----
+
+then the breaker will not trip and will continue to allow requests through regardless:
+
+----
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 207 ms
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 205 ms
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 207 ms
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 207 ms
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 707 ms
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 705 ms
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 706 ms
+----
+
+When we are done manually overriding the breaker behavior, we can set it back to `CLOSED`:
+
+[source, bash]
+----
+curl localhost:8081/circuitbreakers/faultyservice-ping -H 'Content-Type: application/json' -d '{"updateState": "CLOSED"}'
+----
+
+The breaker will resume normal operation at this point.
+
+----
+INFO  [reactor-http-epoll-8] com.github.tomboyo.faultyservice.Requester: Breaker faultyservice-ping transition: DISABLED -> CLOSED
+INFO  [reactor-http-epoll-8] com.github.tomboyo.faultyservice.CircuitBreakerController: Forced FaultyService::ping breaker state to CLOSED
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Breaker faultyservice-ping transition: CLOSED -> OPEN
+INFO  [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call OK in 706 ms
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
+ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
+----
+
 [bibliography]
-= References
+== References
 - [[[Fowler, 1]]] M. Fowler. "CircuitBreaker." martinFowler.com. https://www.martinfowler.com/bliki/CircuitBreaker.html (accessed June 29, 2020).
 - [[[Netflix, 2]]] B. Christensen. "Fault tolerance in a high volume, distributed system." The Netflix Tech Blog. https://netflixtechblog.com/fault-tolerance-in-a-high-volume-distributed-system-91ab4faae74a (accessed June 29, 2020).
