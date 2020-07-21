@@ -1,6 +1,3 @@
-# Runs on a differnet port than FaultyService to avoid conflict.
-server.port: 8081
-
 management.endpoints.web.exposure.include: '*'
   #- 'health'
   #- 'circuitbreakers'

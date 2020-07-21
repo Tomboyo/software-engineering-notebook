@@ -1,4 +1,4 @@
-package com.github.tomboyo.faultyservice.controller;
+package com.github.tomboyo.faultyservice;
 
 import java.util.concurrent.atomic.AtomicReference;
 
