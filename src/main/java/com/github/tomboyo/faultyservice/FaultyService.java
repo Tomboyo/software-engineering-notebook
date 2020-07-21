@@ -31,4 +31,17 @@ public class FaultyService {
             .bodyToMono(String.class)
             .block();
     }
+
+    /**
+     * Makes a blocking call to the ratelimited ping endpoint and returns the
+     * body as a String.
+     */
+    public String ratelimitedPing() {
+        return webClient.get()
+            .uri("ratelimited")
+            .exchange()
+            .block()
+            .bodyToMono(String.class)
+            .block();
+    }
 }

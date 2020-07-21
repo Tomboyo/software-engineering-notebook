@@ -16,3 +16,13 @@ resilience4j.circuitbreaker:
       slidingWindowType: 'COUNT_BASED'
       slidingWindowSize: 1
       minimumNumberOfCalls: 1
+
+# Configuration parameters are documented here:
+# https://resilience4j.readme.io/docs/ratelimiter#create-and-configure-a-ratelimiter
+resilience4j.ratelimiter:
+  instances:
+    ratelimiter-1:
+      timeoutDuration: '4s'
+      limitRefreshPeriod: '3s'
+      limitForPeriod: 1
+

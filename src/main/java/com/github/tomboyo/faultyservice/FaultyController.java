@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+
 @RestController
 public class FaultyController {
     public static final class Configuration {
@@ -51,6 +53,12 @@ public class FaultyController {
     @GetMapping("/")
     public String ping() throws InterruptedException {
         Thread.sleep(config.get().delayMillis());
+        return "Ok";
+    }
+
+    @GetMapping("/ratelimited")
+    @RateLimiter(name = "ratelimiter-1")
+    public String ratelimitedPing() {
         return "Ok";
     }
 }
