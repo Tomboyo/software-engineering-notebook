@@ -200,7 +200,25 @@ The breaker will resume normal operation at this point.
 21:42:43.410 ERROR [scheduling-1] com.github.tomboyo.faultyservice.Requester: Call failed: CircuitBreaker 'faultyservice-ping' is OPEN and does not permit further calls
 ----
 
+== Rate Limiter
+
+In this exercise we use a _rate limiter_ to limit the rate of requests made against a system.
+
+Rate-limiters exist to protect services from unsustainable request volumes, such as during spikes in user traffic or denail-of-service attacks (including friendly-fire from misbehaving collaborator services) <<google-cloud>><<stripe>>. While services can utilize rate-limiting to protect themselves from high request volume, they can also use rate-limiting to control the volume of their own requests to unprotected legacy back-ends that are otherwise vulnerable <<google-cloud>>. In either case, rate-limiters deny requests above a certain throughput, shedding load off vulnerable systems, and may even prioritize certain types of requests over others to ensure less-significant systems degrade before more-critical systems <<stripe>>.
+
+Clients of rate-limited systems should respond to rate-limiting intelligently or else risk https://landing.google.com/sre/sre-book/chapters/addressing-cascading-failures/[cascading failures] as errors from one service propagate uncontrolled throughout a network of collaborting services, possibly with self-reinforcing consequences <<google-cloud>>. In order for clients to respond to rate-limiting, services must signal clients when rate-limiting is active, such as by returning error code https://httpstatuses.com/429[429: Too Many Requests]<<getambassador>> during periods of high load. Clients will typically want to re-try rate-limited requests, though they should do so with exponential back-off and jitter to avoid the https://en.wikipedia.org/wiki/Thundering_herd_problem["thundering herd"] problem wherein many clients inadvetently harmonize their requests, resulting in large spikes of requests to the service <<google-cloud>>. As an alternative to rejecting excessive requests, services may be able to enqueue them for asynchronous fulfillment. In this scenario a service would immediatley return a job ID to the client in response to their request. The client would know to poll the service or subscribe to an appropriate messaging channel for the response <<resilience4j-ratelimiter>><<google-cloud>>.
+
+There are multiple algorithms for rate-limiting <<google-cloud>><<wikipedia-rate-limiting>><<figma-design>>, such as the token bucket, leaky bucket, sliding window, and fixed window algorithms.
+
 [bibliography]
 == References
+// circuit breaker
 - [[[Fowler, 1]]] M. Fowler. "CircuitBreaker." martinFowler.com. https://www.martinfowler.com/bliki/CircuitBreaker.html (accessed June 29, 2020).
 - [[[Netflix, 2]]] B. Christensen. "Fault tolerance in a high volume, distributed system." The Netflix Tech Blog. https://netflixtechblog.com/fault-tolerance-in-a-high-volume-distributed-system-91ab4faae74a (accessed June 29, 2020).
+// rate-limiter
+- [[[google-cloud, 3]]] "Rate-limiting strategies and techniques." Google Cloud. https://cloud.google.com/solutions/rate-limiting-strategies-techniques (accessed Aug. 8, 2020).
+- [[[stripe, 4]]] P. Tarjan. "Scaling your API with rate limiters." Stripe. https://stripe.com/blog/rate-limiters (accessed Aug. 8, 2020).
+- [[[getambassador, 5]]] D. Bryant. "Part 2: rate limiting for API gateways." Ambassador. https://blog.getambassador.io/rate-limiting-for-api-gateways-892310a2da02 (accessed Aug. 8, 2020).
+- [[[resilience4j-ratelimiter, 6]]] "Ratelimiter." Resilience4j. https://resilience4j.readme.io/docs/ratelimiter (accessed Aug. 8, 2020).
+- [[[wikipedia-ratelimiting, 7]]] "Rate limiting." Wikipedia. https://en.wikipedia.org/wiki/Rate_limiting (accessed Aug. 8, 2020).
+- [[[figma-design, 8]]] N. Mahdi. "An alternative approach to rate limiting." Medium. https://medium.com/figma-design/an-alternative-approach-to-rate-limiting-f8a06cf7c94c (accessed Aug. 8, 2020).
