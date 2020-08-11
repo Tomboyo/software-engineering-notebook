@@ -1,0 +1,112 @@
+= Circuitbreaker operations REST API
+
+This example is structurally similar to the link:../general/index.adoc[general exploration], which the reader should be familiar with before proceeding.
+
+This example adds a REST API controller that allows an operator to manipulate the state of the circuit-breaker protecting the `GET /` call (see link:src/main/java/com/github/tomboyo/example/CircuitBreakerController.java[CircuitBreakerController.java]). The API allows the operator to manually change the state of a circuit breaker to one of the `FORCED_OPEN`, `DISABLED`, or `CLOSED` states. While `FORCED_OPEN`, a breaker will deny all traffic. While `DISABLED`, the breaker will instead allow all traffic. In either case the breaker will not change state on its own and must be forced `CLOSED` to resume normal operation.
+
+To change the state of a breaker, make a post request like the following:
+
+[source, bash]
+----
+curl localhost:8080/circuitbreakers/mycircuitbreaker -H 'Content-Type: application/json' -d '{"updateState": "CLOSED"}'
+----
+
+NOTE: The resilience4j team is, as of 2020-July-11, https://github.com/resilience4j/resilience4j/pull/1038[working on Spring Boot Actuator support] to expose circuit breaker state transitions to operators via a REST API. This has not yet been released. Our implementation should resemble theirs.
+
+== Run it!
+
+From the root of this repository, invoke the following:
+
+[source, bash]
+----
+./gradlew -p circuit-breaker/example/operations-api bootRun
+----
+
+As in the link:../general/index.adoc[general] example, when the application starts, the `Requester`'s circuit breaker is initially in the `CLOSED` state and will therefore allow `GET localhost:8080/` requests through. The controller responds after a 200 ms delay by default, which the Client considers to be a healthy response time. As such, the following healthy logs are initially printed:
+
+----
+...
+21:19:50.218 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 222 ms
+21:19:51.214 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 217 ms
+21:19:52.213 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 217 ms
+----
+
+If we wish to stop all traffic through the breaker nonetheless, however, we can issue a POST request to the operations endpoint and put the breaker in the `FORCED_OPEN` state:
+
+[source, bash]
+----
+curl localhost:8080/circuitbreakers/mycircuitbreaker -H 'Content-Type: application/json' -d '{"updateState": "FORCED_OPEN"}'
+----
+
+At this point, every request to the circuit breaker will fail with a CallNotPermitted error, and so the Requester will log errors until we change the breaker state again:
+
+----
+...
+21:37:45.631 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 221 ms
+21:37:46.630 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 221 ms
+21:37:47.626 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 216 ms
+21:37:48.453 INFO  [reactor-http-epoll-4] com.github.tomboyo.example.Requester: Breaker mycircuitbreaker transition: CLOSED -> FORCED_OPEN
+21:37:48.453 INFO  [reactor-http-epoll-4] com.github.tomboyo.example.CircuitBreakerController: Forced mycircuitbreaker breaker state to FORCED_OPEN
+21:37:48.618 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 209 ms
+21:37:49.413 ERROR [scheduling-1] com.github.tomboyo.example.Requester: Call failed: CircuitBreaker 'mycircuitbreaker' is FORCED_OPEN and does not permit further calls
+21:37:50.410 ERROR [scheduling-1] com.github.tomboyo.example.Requester: Call failed: CircuitBreaker 'mycircuitbreaker' is FORCED_OPEN and does not permit further calls
+21:37:51.410 ERROR [scheduling-1] com.github.tomboyo.example.Requester: Call failed: CircuitBreaker 'mycircuitbreaker' is FORCED_OPEN and does not permit further calls
+----
+
+We could next force the breaker into the `DISABLED` state:
+
+[source, bash]
+----
+curl localhost:8080/circuitbreakers/mycircuitbreaker -H 'Content-Type: application/json' -d '{"updateState": "DISABLED"}'
+----
+
+This will allow requests through no matter what, and so the requester should go back to logging `Call OK` lines.
+
+----
+...
+21:39:52.410 ERROR [scheduling-1] com.github.tomboyo.example.Requester: Call failed: CircuitBreaker 'mycircuitbreaker' is FORCED_OPEN and does not permit further calls
+21:39:52.595 INFO  [reactor-http-epoll-5] com.github.tomboyo.example.Requester: Breaker mycircuitbreaker transition: FORCED_OPEN -> DISABLED
+21:39:52.595 INFO  [reactor-http-epoll-5] com.github.tomboyo.example.CircuitBreakerController: Forced mycircuitbreaker breaker state to DISABLED
+21:39:53.620 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 211 ms
+21:39:54.624 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 215 ms
+----
+
+If we then instruct the REST API to take a long time to respond (using the configuration API introduced in the link:../general/index.adoc[general example]),
+
+[source, bash]
+----
+curl localhost:8080/ -H 'Content-Type: application/json' -d '{"delay_millis": 700}'
+----
+
+the breaker will not trip and will allow requests through regardless:
+
+----
+...
+21:41:39.615 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 206 ms
+21:41:40.618 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 208 ms
+21:41:41.618 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 208 ms
+21:41:43.117 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 708 ms
+21:41:44.117 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 708 ms
+21:41:45.118 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 708 ms
+----
+
+When we are done manually overriding the breaker behavior, we can set it back to `CLOSED`:
+
+[source, bash]
+----
+curl localhost:8080/circuitbreakers/mycircuitbreaker -H 'Content-Type: application/json' -d '{"updateState": "CLOSED"}'
+----
+
+The breaker will resume normal operation at this point.
+
+----
+...
+21:42:40.121 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 712 ms
+21:42:41.116 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 707 ms
+21:42:42.117 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 707 ms
+21:42:42.223 INFO  [reactor-http-epoll-7] com.github.tomboyo.example.Requester: Breaker mycircuitbreaker transition: DISABLED -> CLOSED
+21:42:42.223 INFO  [reactor-http-epoll-7] com.github.tomboyo.example.CircuitBreakerController: Forced mycircuitbreaker breaker state to CLOSED
+21:42:43.120 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Breaker mycircuitbreaker transition: CLOSED -> OPEN
+21:42:43.120 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 711 ms
+21:42:43.410 ERROR [scheduling-1] com.github.tomboyo.example.Requester: Call failed: CircuitBreaker 'mycircuitbreaker' is OPEN and does not permit further calls
+----

@@ -1,4 +1,4 @@
-package com.github.tomboyo.faultyservice;
+package com.github.tomboyo.example;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -12,10 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
-
 @RestController
-public class FaultyController {
+public class PingController {
     public static final class Configuration {
         private final long delayMillis;
 
@@ -33,7 +31,7 @@ public class FaultyController {
 
     private AtomicReference<Configuration> config;
 
-    public FaultyController() {
+    public PingController() {
         config = new AtomicReference<>(new Configuration(200));
     }
 
@@ -53,12 +51,6 @@ public class FaultyController {
     @GetMapping("/")
     public String ping() throws InterruptedException {
         Thread.sleep(config.get().delayMillis());
-        return "Ok";
-    }
-
-    @GetMapping("/ratelimited")
-    @RateLimiter(name = "ratelimiter-1")
-    public String ratelimitedPing() {
         return "Ok";
     }
 }

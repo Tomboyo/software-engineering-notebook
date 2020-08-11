@@ -1,13 +1,8 @@
-management.endpoints.web.exposure.include: '*'
-  #- 'health'
-  #- 'circuitbreakers'
-  #- 'circuitbreakerevents'
-
 # Configuration parameters are documented here:
 # https://resilience4j.readme.io/docs/circuitbreaker#create-and-configure-a-circuitbreaker
 resilience4j.circuitbreaker:
   instances:
-    faultyservice-ping:
+    mycircuitbreaker:
       slowCallDurationThreshold: '500ms'
       permittedNumberOfCallsInHalfOpenState: 1
       waitDurationInOpenState: '5s'
@@ -16,13 +11,3 @@ resilience4j.circuitbreaker:
       slidingWindowType: 'COUNT_BASED'
       slidingWindowSize: 1
       minimumNumberOfCalls: 1
-
-# Configuration parameters are documented here:
-# https://resilience4j.readme.io/docs/ratelimiter#create-and-configure-a-ratelimiter
-resilience4j.ratelimiter:
-  instances:
-    ratelimiter-1:
-      timeoutDuration: '4s'
-      limitRefreshPeriod: '3s'
-      limitForPeriod: 1
-

@@ -1,0 +1,93 @@
+= Exploration of general circuit-breaker usage
+
+This example consists of a Spring Boot application utilizing https://github.com/resilience4j/resilience4j[resilience4j] annotations. The application consists of a link:src/main/java/com/github/tomboyo/example/PingController.java[REST API] which responds to `GET /` requests after a configurable delay and a link:src/main/java/com/github/tomboyo/example/Requester.java[client] which issues such requests on a fixed schedule. The client wraps its HTTP calls with a circuit-breaker, which may prevent calls to the REST API from being made on any attempt:
+
+[source, java]
+----
+include::src/main/java/com/github/tomboyo/example/PingApi.java[tag=circuitbreaker]
+----
+
+The breaker is configured to trip into the `OPEN` state and deny requests after a single slow or erroneous response from the protected HTTP call. It will remain `OPEN` for a while and deny subsequent requests, then transition to `HALF-OPEN` and allow a single probe request through. If the probe is still unhealthy, the breaker returns to the `OPEN` state and continues to deny requests. Otherwise it will `CLOSE` and allow all requests through until another slow response trips the breaker. The configuration is located in the application.yaml:
+
+[source, yaml]
+----
+include::src/main/resources/application.yaml[]
+----
+
+The `GET /` endpoint responds to requests after a delay; this delay may be configured by sending a request to `POST localhost:8080/`, like so:
+
+[source, bash]
+----
+curl localhost:8080/ -H 'Content-Type: application/json' -d '{"delay_millis": 2000}'
+----
+
+By reconfiguring the delay, we may create conditions under which the breaker will trip. For simplicity's sake our server and client run in the same application, but were that not so we could also kill or otherwise crash the server to trip the client's breaker.
+
+== Run it!
+
+From the root of this repository, invoke the following:
+
+[source, bash]
+----
+./gradlew -p circuit-breaker/example/general bootRun
+----
+
+When the application starts, the `Requester`'s circuit breaker is initially in the `CLOSED` state and will therefore allow `GET localhost:8080/` through. The controller responds after a 200 ms delay by default, which the circuit-breaker considers to be a healthy response time. As such, the following healthy logs are initially printed:
+
+----
+...
+21:19:50.218 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Call OK in 222 ms
+21:19:51.214 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Call OK in 217 ms
+21:19:52.213 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Call OK in 217 ms
+----
+
+NOTE: Sometimes due to slow application startup, the first response is slow and trips the breaker. Wait a few moments and the logging should resemble the above.
+
+If we make the following POST request, the REST API will not respond to requests until after 700 ms, which is slower than the Client considers to be healthy:
+
+----
+curl localhost:8080/ -H 'Content-Type: application/json' -d '{"delay_millis": 700}'
+----
+
+As a result, the Client's circuit breaker will trip into the `open` state and deny subsequent requests to the protected HTTP GET method. At this point, REST API is no longer receiving traffic.
+
+----
+...
+21:20:24.719 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Breaker mycircuitbreaker transition: CLOSED -> OPEN
+21:20:24.720 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Call OK in 724 ms
+21:20:25.000 ERROR [scheduling-1] com.github.tomboyo.exercise.Requester: Call failed: CircuitBreaker 'mycircuitbreaker' is OPEN and does not permit further calls
+21:20:25.997 ERROR [scheduling-1] com.github.tomboyo.exercise.Requester: Call failed: CircuitBreaker 'mycircuitbreaker' is OPEN and does not permit further calls
+----
+
+NOTE: The Requester logs round-trip time (`Call OK in ...`) after the request to the breaker is evaluated, so transition events (`transition: CLOSED -> OPEN`) are logged before the elapsed time.
+
+After an interval, however, the breaker will transition to the `HALF-OPEN` state. It will allow one request through to the protected HTTP method in order to assess the health of the underlying service. If the REST API is left as we have configured it, the probe request will take a little over 700 ms and again trip the breaker into the `OPEN` state.
+
+----
+...
+21:20:28.997 ERROR [scheduling-1] com.github.tomboyo.exercise.Requester: Call failed: CircuitBreaker 'mycircuitbreaker' is OPEN and does not permit further calls
+21:20:29.998 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Breaker mycircuitbreaker transition: OPEN -> HALF_OPEN
+21:20:30.709 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Breaker mycircuitbreaker transition: HALF_OPEN -> OPEN
+21:20:30.710 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Call OK in 714 ms
+21:20:30.997 ERROR [scheduling-1] com.github.tomboyo.exercise.Requester: Call failed: CircuitBreaker 'mycircuitbreaker' is OPEN and does not permit further calls
+21:20:31.997 ERROR [scheduling-1] com.github.tomboyo.exercise.Requester: Call failed: CircuitBreaker 'mycircuitbreaker' is OPEN and does not permit further calls
+----
+
+However, if we reconfigure the REST API to respond after a short 100 ms delay,
+
+[source, bash]
+----
+curl localhost:8080/ -H 'Content-Type: application/json' -d '{"delay_millis": 100}'
+----
+
+then when the breaker next enters the `HALF-OPEN` state, the probe request will resolve quickly and the breaker will transition into the `CLOSED` state. In this state, all requests to the breaker's protected HTTP method are made. The REST API now receives 100% of attempted traffic.
+
+----
+...
+21:23:28.996 ERROR [scheduling-1] com.github.tomboyo.exercise.Requester: Call failed: CircuitBreaker 'mycircuitbreaker' is OPEN and does not permit further calls
+21:23:29.996 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Breaker mycircuitbreaker transition: OPEN -> HALF_OPEN
+21:23:30.108 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Breaker mycircuitbreaker transition: HALF_OPEN -> CLOSED
+21:23:30.109 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Call OK in 113 ms
+21:23:31.106 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Call OK in 110 ms
+21:23:32.106 INFO  [scheduling-1] com.github.tomboyo.exercise.Requester: Call OK in 110 ms
+----

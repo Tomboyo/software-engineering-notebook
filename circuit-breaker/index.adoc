@@ -1,0 +1,22 @@
+= Circuit Breaker
+
+A circuit breaker is a tool to shed load from struggling subsystems, decrease latency of requests by failing fast, introduce subsystem monitoring, and give operations teams granular control over system interactions <<Fowler>><<Netflix>>.
+
+A circuit breaker is essentially a protective sleeve around a function call. Clients make requests to the breaker instead of to the protected function, and then the breaker selectively chooses to forward those requests on to the protected function. If the function becomes unresponsive or erroneous, the breaker may "trip" and refuse to forward subsequent requests.
+
+In this way a breaker can reduce load on strained subsystems accessed by its protected call. This not only gives the strained subsystem an opportunity to recover <<Fowler>><<Netflix>>, it also prevents the client from potentially dedicating resources to a slow subsystem <<Fowler>><<Netflix>>, allowing those resources to be used for productive work. The client of a tripped breaker may furthermore fall back on secondary measures (e.g cached data or default values); while not ideal, this ensures end-users receive usable data within an acceptable window of time <<Netflix>>.
+
+A circuit breaker may generate logs, alerts, or other diagnostics when it is tripped, informing operators of possible system degradation, and may even expose an interface to operators which allows them to manually toggle the breaker between states for troubleshooting <<Fowler>>.
+
+The following sections demonstrate these capabilities of the circuit breaker.
+
+== Examples
+
+* link:example/general/index.adoc[Exploration of general circuit-breaker usage.] Built with Java, Resilience4J, and Spring Boot.
+
+* link:example/operations-api/index.adoc[Implement an operations REST API to manipulate circuit-breakers at runtime.] Built with Java, Resilience4J, and Spring Boot.
+
+[bibliography]
+== References
+- [[[Fowler, 1]]] M. Fowler. "CircuitBreaker." martinFowler.com. https://www.martinfowler.com/bliki/CircuitBreaker.html (accessed June 29, 2020).
+- [[[Netflix, 2]]] B. Christensen. "Fault tolerance in a high volume, distributed system." The Netflix Tech Blog. https://netflixtechblog.com/fault-tolerance-in-a-high-volume-distributed-system-91ab4faae74a (accessed June 29, 2020).

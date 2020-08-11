@@ -1,13 +1,12 @@
-package com.github.tomboyo.faultyservice;
+package com.github.tomboyo.example;
 
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.function.Supplier;
 
 public class TimedCall<T> {
-    private final Duration elapsed;
-    private final T value;
+    public final Duration elapsed;
+    public final T value;
 
     private TimedCall(Duration elapsed, T value) {
         this.elapsed = elapsed;
@@ -19,13 +18,5 @@ public class TimedCall<T> {
         T value = supplier.get();
         Duration elapsed = Duration.between(start, Instant.now());
         return new TimedCall<>(elapsed, value);
-    }
-
-    public Duration elapsed() {
-        return elapsed;
-    }
-
-    public T value() {
-        return value;
     }
 }

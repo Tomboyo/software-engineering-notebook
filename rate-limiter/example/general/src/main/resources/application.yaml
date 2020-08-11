@@ -1,0 +1,8 @@
+# Configuration parameters are documented here:
+# https://resilience4j.readme.io/docs/ratelimiter#create-and-configure-a-ratelimiter
+resilience4j.ratelimiter:
+  instances:
+    myratelimiter:
+      timeoutDuration: '4s'
+      limitRefreshPeriod: '3s'
+      limitForPeriod: 1

@@ -1,6 +1,4 @@
-package com.github.tomboyo.faultyservice;
-
-import static java.lang.String.format;
+package com.github.tomboyo.example;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -29,10 +27,10 @@ public class CircuitBreakerController {
     public CircuitBreakerController(
         CircuitBreakerRegistry registry
     ) {
-        this.pingBreaker = registry.circuitBreaker("faultyservice-ping");
+        this.pingBreaker = registry.circuitBreaker("mycircuitbreaker");
     }
 
-    @PostMapping("/circuitbreakers/faultyservice-ping")
+    @PostMapping("/circuitbreakers/mycircuitbreaker")
     public void forceBreakerState(
         @RequestBody BreakerStateUpdate update
     ) {
