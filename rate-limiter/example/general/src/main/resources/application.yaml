@@ -3,6 +3,6 @@
 resilience4j.ratelimiter:
   instances:
     myratelimiter:
-      timeoutDuration: '4s'
-      limitRefreshPeriod: '3s'
-      limitForPeriod: 1
+      timeoutDuration: '10ms'
+      limitRefreshPeriod: '1s'
+      limitForPeriod: 3

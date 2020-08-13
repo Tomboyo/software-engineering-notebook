@@ -1,0 +1,62 @@
+= Exploration of general rate-limiter usage
+
+This example consists of a Spring Boot application utilizing https://github.com/resilience4j/resilience4j[resilience4j] annotations. The application includes a link:src/main/java/com/github/tomboyo/example/PingController.java[REST API] which responds to `GET /` requests after 200 milliseconds and a link:src/main/java/com/github/tomboyo/example/Requester.java[client] which issues such requests on a configurable schedule. The REST API protects itself from excessive use with a resilience4j rate-limiter, which may reject incoming requests before they are serviced:
+
+[source, java]
+----
+include::src/main/java/com/github/tomboyo/example/PingController.java[tag=ratelimiter]
+----
+
+The ratelimiter is configured to permit as many as three reqeusts per window, and is configured to refresh permits once every second (that is, it allows three requests per second). Any request which cannot immediately acquire a permit will block for as long as 10 milliseconds waiting for a permit to become available. If a permit does not become available in this time, the call fails with a 429 code. This configuration resides in the application yaml:
+
+[source, yaml]
+----
+include::src/main/resources/application.yaml[]
+----
+
+The rate at which requests are made by the client may be configured with a POST request like the following:
+
+[source, bach]
+----
+curl -XPOST 'localhost:8080/requester?delayBetweenRequests=200'
+----
+
+This configures the client to issue a request every 200 milliseconds (five times per second), which is fast enough to exceed the rate limit.
+
+== Run it!
+
+From the root of this repository, invoke the following:
+
+[source, bash]
+----
+./gradlew -p rate-limiter/example/general bootRun
+----
+
+When the application starts, the client will send one request to the REST API per second, which is well within the limit (three per second). We will see output like the following printed once per second in the terminal:
+
+----
+...
+19:54:12.336 INFO  [pool-1-thread-1] com.github.tomboyo.example.Requester: Call 200 in 213 ms
+...
+----
+
+If we reconfigure the client to issue five requests per second instead (that is, wait 200 milliseconds between submitting requests),
+
+[source, bash]
+----
+curl -XPOST 'localhost:8080/requester?delayBetweenRequests=200'
+----
+
+then we will see a pattern like the following where three successful requests are followed by two rate-limited requests:
+
+----
+...
+19:54:13.337 INFO  [pool-1-thread-1] com.github.tomboyo.example.Requester: Call 200 in 212 ms
+19:54:13.549 INFO  [pool-1-thread-1] com.github.tomboyo.example.Requester: Call 200 in 211 ms
+19:54:13.761 INFO  [pool-1-thread-1] com.github.tomboyo.example.Requester: Call 200 in 210 ms
+19:54:13.781 INFO  [pool-1-thread-1] com.github.tomboyo.example.Requester: Call 429 in 19 ms
+19:54:13.948 INFO  [pool-1-thread-1] com.github.tomboyo.example.Requester: Call 429 in 20 ms
+...
+----
+
+Note that the rate-limited requests return quicker than their `200 OK` counterparts because the rate-limited requests do not exercise any of the REST API's logic; they simply wait for 10 milliseconds for a permit from the rate-limiter, fail to get one, and return `429 Too Many Requests` immediately.

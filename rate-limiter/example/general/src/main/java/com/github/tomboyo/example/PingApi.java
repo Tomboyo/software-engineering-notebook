@@ -1,6 +1,7 @@
 package com.github.tomboyo.example;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -18,14 +19,13 @@ public class PingApi {
     }
 
     /**
-     * Makes a blocking call to the ping endpoint and returns the body as a
-     * String.
+     * Makes a blocking call to the ping endpoint and returns the reponse
      */
-    public String ping() {
+    public ResponseEntity<String> ping() {
         return webClient.get()
             .exchange()
             .block()
-            .bodyToMono(String.class)
+            .toEntity(String.class)
             .block();
     }
 }
