@@ -8,6 +8,10 @@ Public-facing services may need to make special considerations in how they respo
 
 There are multiple algorithms for rate-limiting <<google-cloud>><<wikipedia-ratelimiting>><<figma>>, such as the token bucket, leaky bucket, sliding window, and fixed window algorithms.
 
+== Examples
+
+* link:example/general/index.adoc[Exploration of general rate-limiter usage.] Built with Java, Resilience4J, and Spring Boot.
+
 [bibliography]
 == References
 - [[[google-cloud, 1]]] "Rate-limiting strategies and techniques." Google Cloud. https://cloud.google.com/solutions/rate-limiting-strategies-techniques (accessed Aug. 8, 2020).
