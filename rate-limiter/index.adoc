@@ -10,13 +10,14 @@ There are multiple algorithms for rate-limiting (see <<google-cloud>><<wikipedia
 
 == Token Bucket (Leaky Bucket) Algorithm
 
-NOTE: There are two implementations of the leaky bucket, one used to police traffic, and one used to shape it. The version that is used to police traffic is conceptually the same as the token bucket; the amount to different mental models for the same algorithm. <<wikipedia-token-bucket>>
+NOTE: There are two implementations of the leaky bucket, one used to police traffic, and one used to shape it. The version that is used to police traffic is conceptually the same as the token bucket; these amount to different mental models for the same algorithm. <<wikipedia-token-bucket>>
 
 The token bucket algorithm is used to police or shape traffic to conform to a desired level of "burstiness" and average request rate <<science-direct>><<wikipedia-token-bucket>>. This strategy limits each request by the resources (e.g. database connections, CPU time) it requires such that overall traffic is limited on the basis of available system capacity rather than simple volume of requests <<google-cloud>>.
 
 The algorithm is based on the analogy of a bucket filled with tokens. Requesters must retrieve some number of tokens from the bucket based on the capacity they wish to utilize. If the bucket has enough tokens, the requester removes the tokens and computes a response. If the bucket has too few tokens, the request is rejected or enqueued for later computation depending on implementation. At a fixed rate, tokens are added back to the bucket, but any excess tokens beyond the bucket's capacity are simply discarded <<google-cloud>><<cisco-token-bucket>><<wikipedia-token-bucket>>. The capacity of the bucket therefore determines the maximum instantaneous capacity that may be utilized by requests, and the rate at which tokens are added governs the long-term average utilization <<cisco-token-bucket>><<wikipedia-token-bucket>><<science-direct>>.
 
 In telecommunications contexts, token buckets are often used to limit the average rate at which bits flow into a network with limited bandwidth <<cisco-token-bucket>><<wikipedia-token-bucket>><<science-direct>>. The literature describes such a token bucket algorithm with the equation `CIR = CBS * T` <<science-direct>>, where:
+
 * `CIR`, the _committed information rate_ or _mean rate_, is the average rate at which bits are forwarded to the network;
 * `CBS`, the _committed burst size_, is the maximum volume of bits submitted simultaneously during the time period `T`; and
 * `T` is the maximum duration of a burst during which the network is fully utilized.
@@ -40,4 +41,4 @@ The capacity of a token bucket is represented by `CBS`; clients of the bucket ca
 - [[[wikipedia-ratelimiting, 7]]] "Rate limiting." Wikipedia. https://en.wikipedia.org/wiki/Rate_limiting (accessed Aug. 8, 2020).
 - [[[wikipedia-token-bucket, 8]]] "Token bucket." Wikipedia. https://en.wikipedia.org/wiki/Token_bucket (accessed Sep. 7, 2020)
 - [[[science-direct, 9]]] D. Medhi, K. Ramasamy, Network Routing, 2nd ed. Elsevier Inc, 2018, ch. 18.4.2, pp. 626-644. [Online]. Available: https://www.sciencedirect.com/topics/computer-science/token-bucket. Accessed: Sep. 7, 2020.
-- [[[cisco-token-bucket, 10]]] "Policing and Shaping Overview." Cisco Networking Software. https://www.cisco.com/c/en/us/td/docs/ios/qos/configuration/guide/12_2sr/qos_12_2sr_book/polcing_shping_oview.html (accessed Sep 07, 2020).
+- [[[cisco-token-bucket, 10]]] "Policing and Shaping Overview." Cisco Networking Software. https://www.cisco.com/c/en/us/td/docs/ios/qos/configuration/guide/12_2sr/qos_12_2sr_book/polcing_shping_oview.html (accessed Sep 7, 2020).
