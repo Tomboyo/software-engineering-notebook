@@ -1,0 +1,24 @@
+= Token Bucket
+
+This example implements two token buckets in Elixir. One uses lockless concurrency primitives from the OTP Atomics module to achieve high-throughput intra-node rate-limiting. The other utilizes an Agent process to implement a distributable but substantially slower rate-limiter.
+
+For testing and benchmarking convenience, both implementations adhere to the TokenBucket behavior and TokenBucket.Bucket protocol, defined in link:lib/token_bucket.ex[token_bucket.ex].
+
+== 1. Agent Bucket
+
+The agent bucket implementation uses an Elixir Agent to keep a counter of tokens which other processes may request. By virtue of message passing, the implementation achieves mutual exclusion in a distributed environment, so it is theoretically suitable to guard a shared resource. On a fixed interval, an link:https://erlang.org/doc/man/timer.html[OTP timer process] adds tokens to the bucket.
+
+Ad-hoc benchmarks show throughput of approximately 200 requests per millisecond on my machine. For contrast, the "control" bucket (which is a no-op) could fire 4,500 times per millisecond. Actual performance of the agent implementation would likely be worse since network latency would become a factor in practical use-cases.
+
+== 2. Atomic Bucket
+
+The atomic bucket implementation relies on the link:http://erlang.org/doc/man/atomics.html[OTP atomics module] for counting available tokens. This module utilizes compare-and-swap hardware instructions to achieve high-performance, lockless atomic updates of shared data, which enables very high throughput updates of the shared token counter in the context of a single node. Similar to the agent bucket, an link:https://erlang.org/doc/man/timer.html[OTP timer process] adds tokens to the bucket on a fixed interval.
+
+Ad-hoc benchmarks show throughput of approximately 2,900 - 3700 requests per millisecond on my machine, with higher throughput when requests are denied and slower throughput when requests are granted. For contrast, the "control" bucket (which is a no-op) could fire 4,500 timer per millisecond.
+
+The difference in performance between when requests are denied and when requests are granted is rooted in the implementation. In either case, the bucket must atomically read the value of the token counter. When there are too few tokens, however, the denied case can exit immediately. The granted case must then attempt to update the token counter, which could require several attempts. Reference the implementation of `take`:
+
+[source, elixir]
+----
+include::lib/token_bucket/atomic_bucket.ex[tag=take]
+----
