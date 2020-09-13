@@ -12,9 +12,9 @@ The following sections demonstrate these capabilities of the circuit breaker.
 
 == Examples
 
-* link:example/general/index.adoc[Exploration of general circuit-breaker usage.] Built with Java, Resilience4J, and Spring Boot.
+* link:example/general/README.adoc[Exploration of general circuit-breaker usage.] Built with Java, Resilience4J, and Spring Boot.
 
-* link:example/operations-api/index.adoc[Implement an operations REST API to manipulate circuit-breakers at runtime.] Built with Java, Resilience4J, and Spring Boot.
+* link:example/operations-api/README.adoc[Implement an operations REST API to manipulate circuit-breakers at runtime.] Built with Java, Resilience4J, and Spring Boot.
 
 [bibliography]
 == References

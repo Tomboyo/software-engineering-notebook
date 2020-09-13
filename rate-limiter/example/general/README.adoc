@@ -7,7 +7,7 @@ This example consists of a Spring Boot application utilizing https://github.com/
 include::src/main/java/com/github/tomboyo/example/PingController.java[tag=ratelimiter]
 ----
 
-The ratelimiter is configured to permit as many as three reqeusts per window, and is configured to refresh permits once every second (that is, it allows three requests per second). Any request which cannot immediately acquire a permit will block for as long as 10 milliseconds waiting for a permit to become available. If a permit does not become available in this time, the call fails with a 429 code. This configuration resides in the application yaml:
+The ratelimiter is configured to permit as many as three requests per window, and is configured to refresh permits once every second (that is, it allows three requests per second). Any request which cannot immediately acquire a permit will block for as long as 10 milliseconds waiting for a permit to become available. If a permit does not become available in this time, the call fails with a 429 code. This configuration resides in the application yaml:
 
 [source, yaml]
 ----

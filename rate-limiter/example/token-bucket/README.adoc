@@ -14,7 +14,7 @@ Ad-hoc benchmarks show throughput of approximately 200 requests per millisecond 
 
 The atomic bucket implementation relies on the link:http://erlang.org/doc/man/atomics.html[OTP atomics module] for counting available tokens. This module utilizes compare-and-swap hardware instructions to achieve high-performance, lockless atomic updates of shared data, which enables very high throughput updates of the shared token counter in the context of a single node. Similar to the agent bucket, an link:https://erlang.org/doc/man/timer.html[OTP timer process] adds tokens to the bucket on a fixed interval.
 
-Ad-hoc benchmarks show throughput of approximately 2,900 - 3700 requests per millisecond on my machine, with higher throughput when requests are denied and slower throughput when requests are granted. For contrast, the "control" bucket (which is a no-op) could fire 4,500 timer per millisecond.
+Ad-hoc benchmarks show throughput of approximately 2,900 - 3700 requests per millisecond on my machine, with higher throughput when requests are denied and slower throughput when requests are granted. For contrast, the "control" bucket (which is a no-op) could fire 4,500 times per millisecond.
 
 The difference in performance between when requests are denied and when requests are granted is rooted in the implementation. In either case, the bucket must atomically read the value of the token counter. When there are too few tokens, however, the denied case can exit immediately. The granted case must then attempt to update the token counter, which could require several attempts. Reference the implementation of `take`:
 

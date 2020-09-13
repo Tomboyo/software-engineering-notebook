@@ -6,9 +6,9 @@ This repository consists of short essays and programming exercises in the field 
 
 :leveloffset: +1
 
-include::circuit-breaker/index.adoc[]
+include::circuit-breaker/README.adoc[]
 
-include::rate-limiter/index.adoc[]
+include::rate-limiter/README.adoc[]
 
 :leveloffset: -1
 

@@ -26,9 +26,9 @@ The capacity of a token bucket is represented by `CBS`; clients of the bucket ca
 
 == Examples
 
-* link:example/general/index.adoc[Exploration of general rate-limiter usage.] Built with Java, Resilience4J, and Spring Boot.
+* link:example/general/README.adoc[Exploration of general rate-limiter usage.] Built with Java, Resilience4J, and Spring Boot.
 
-* link:example/token-bucket/index.adoc[Implementations of the token bucket rate-limiter algorithm.] Built with Elixir using agents for distributed rate-limiting or atomics for fast local rate-limiting.
+* link:example/token-bucket/README.adoc[Implementations of the token bucket rate-limiter algorithm.] Built with Elixir using agents for distributed rate-limiting or atomics for fast local rate-limiting.
 
 [bibliography]
 == References
