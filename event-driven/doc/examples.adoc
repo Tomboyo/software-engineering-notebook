@@ -1,0 +1,80 @@
+Publish a message every 200ms using the specific thread pool:
+[source, java]
+----
+@Bean
+public Supplier<Flux<Long>> currentTimeMillis() {
+  return () -> Flux.fromStream(Stream.generate(
+    () -> {
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      return System.currentTimeMillis();
+    };
+  )).subscribeOn(Schedulers.elastic());
+}
+----
+
+How HOFs are invoked:
+[source, java]
+----
+/*
+* The HOF is invoked one time at application startup to construct the
+* dependency graph. The function instantiated by the HOF is invoked once per
+* argument. E.g, if we pass [cats, dogs], the function is invoked once on
+* cats and once on dogs.
+*/
+@Bean
+public Function<String, String> toUpperCase() {
+  return String::toUpperCase;
+}
+
+/*
+* The HOF is invoked one time at application startup to construct the
+* dependency graph. The function instantiated by the HOF is invoked once per
+* Flux of arguments, regardless of how many there are. E.g, if we pass [cats,
+* dogs] as a flux, the function is invoked just once, though the toLowerCase
+* operation is applied to each element of the Flux in turn. This is similar
+* to java's Stream.
+*/
+@Bean
+public Function<Flux<String>, Flux<String>> toLowerCase() {
+  return in -> in.map(String::toLowerCase);
+}
+----
+
+Split a stream
+[source, java]
+----
+// Create a Connectable Flux (via `publish`) to split the flux among many consumers. It will connect to the upstream
+// source as soon as a consumer subscribes.
+var source = flux.publish().autoConnect();
+
+source
+    // Consume even events only (half the stream)
+    .filter(x -> x % 2 == 0)
+    // Publish via a new thread rather than the default consumer thread. This ensures we do not block and are not
+    // blocked by other (potentially slow) publishers that could otherwise start on the same thread.
+    .publishOn(Schedulers.newSingle("even-pub"))
+    // Do some slow work
+    .doOnNext(log("even").andThen(pause(3000)))
+    // Demand unbounded input.
+    .subscribe();
+
+source
+    // Consume odd events only (the other half of the stream)
+    .filter(x -> x % 2 == 1)
+    // Publish via a new thread rather than the default consuemr thread. As before this ensures the publication of
+    // messages is never inadvertently blocked.
+    .publishOn(Schedulers.newSingle("odd-pub"))
+    // Divide the flux into nine parallel rails.
+    .parallel(9)
+    // Run each rail on a separate thread in the bounded elastic scheduler if possible. Rails can end up sharing
+    // scheduler threads if there are not enough. Work is distributed round-robin.
+    .runOn(Schedulers.boundedElastic())
+    // Do some slow work.
+    .doOnNext(log("odd").andThen(pause(3000)))
+    // Demand unbounded input.
+    .subscribe();
+----

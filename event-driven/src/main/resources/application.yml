@@ -1,0 +1,12 @@
+logging.level.com.github.tomboyo: 'INFO'
+
+spring.cloud:
+  function:
+    definition: 'clock;request'
+  stream.bindings:
+    clock-out-0:
+      destination: 'clock'
+      group: 'group-0'
+    request-in-0:
+      destination: 'clock'
+      group: 'group-0'
