@@ -1,4 +1,4 @@
-logging.level.com.github.tomboyo: 'INFO'
+logging.level.com.github.tomboyo: 'TRACE'
 
 spring.cloud:
   function:

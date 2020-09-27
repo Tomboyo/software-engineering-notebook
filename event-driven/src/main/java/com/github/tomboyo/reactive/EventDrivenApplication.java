@@ -11,7 +11,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -40,19 +39,34 @@ public class EventDrivenApplication {
 
     @Bean
     public Consumer<Flux<Long>> request() {
-        RestTemplate template = new RestTemplate();
-
         return flux -> flux
                 .parallel(2)
                 .runOn(Schedulers.boundedElastic())
-                .flatMap(x -> Mono
-                        .fromSupplier(() -> {
-                            template.getForObject("http://localhost:8080/", String.class);
-                            return x + " - OK";
-                        })
-                        .doOnError(e -> LOGGER.error("Error {}", e.getMessage()))
-                        .onErrorReturn("ERROR"))
+                .flatMap(caller())
                 .doOnNext(x -> LOGGER.info("request - {}", x))
                 .subscribe();
+    }
+
+    private Function<Long, Mono<String>> caller() {
+        RestTemplate template = new RestTemplate();
+
+        Function<Long, String> call = x -> {
+            template.getForObject("http://localhost:8080/", String.class);
+            return "OK";
+        } ;
+
+        return x -> Mono.fromSupplier(() -> call.apply(x))
+                .doOnError(e -> LOGGER.debug("\t {} - {}", x, e.getMessage()))
+                // per-request timeout based on the average response time of 600ms
+                .timeout(Duration.ofMillis(800))
+                .doOnError(e -> LOGGER.debug("\t {} - {}", x, e.getMessage()))
+                // re-try any failure (including timeout) up to 3 times
+                .retry(3)
+                // "overall" timeout to prevent multiple slow retry attempts.
+                // Three average-latency requests take 1800 ms overall.
+                .timeout(Duration.ofSeconds(2))
+                .doOnError(e -> LOGGER.debug("\t {} - {}", x, e.getMessage()))
+                .onErrorReturn("REQUEST ERROR")
+                .map(y -> x + " - " + y);
     }
 }

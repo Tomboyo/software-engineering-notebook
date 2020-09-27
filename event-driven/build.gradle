@@ -23,9 +23,6 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-stream'
     implementation 'org.springframework.cloud:spring-cloud-stream-binder-rabbit'
 
-    implementation("io.github.resilience4j:resilience4j-spring-boot2:${resilience4jVersion}")
-    implementation("io.github.resilience4j:resilience4j-reactor:${resilience4jVersion}")
-
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }

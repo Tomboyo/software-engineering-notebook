@@ -16,23 +16,32 @@ public class MockController {
 
     @GetMapping("/")
     public ResponseEntity<Void> handleRequest() {
-        pause(100, 2_000);
+        // var mode = "5xx";
+        var mode = "timeout";
 
-        double k = rand.nextDouble();
-        if (k < 0.1) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        } else {
-            return ResponseEntity.ok().build();
+        switch (mode) {
+            case "4xx":
+                pause(100, 1_000);
+                return ResponseEntity.badRequest().build();
+            case "5xx":
+                pause(100, 1_000);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            case "timeout":
+                pause(2_000, 1_000);
+                return ResponseEntity.ok().build();
+            default:
+                pause(100, 1_000);
+                return ResponseEntity.ok().build();
         }
-//            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-//            return ResponseEntity.badRequest().build();
-//            return ResponseEntity.ok().build();
     }
 
     private void pause(long delay, int jitter) {
         try {
-            Thread.sleep(delay + rand.nextInt(jitter));
+            if (jitter > 0) {
+                Thread.sleep(delay + rand.nextInt(jitter));
+            } else {
+                Thread.sleep(delay);
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
