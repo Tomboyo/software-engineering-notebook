@@ -16,8 +16,8 @@ public class MockController {
 
     @GetMapping("/")
     public ResponseEntity<Void> handleRequest() {
-        // var mode = "5xx";
-        var mode = "timeout";
+        var mode = "ok";
+        //var mode = "timeout";
 
         switch (mode) {
             case "4xx":
@@ -29,9 +29,11 @@ public class MockController {
             case "timeout":
                 pause(2_000, 1_000);
                 return ResponseEntity.ok().build();
-            default:
-                pause(100, 1_000);
+            case "ok":
+                pause(600, 0);
                 return ResponseEntity.ok().build();
+            default:
+                throw new IllegalArgumentException("Unexpected mode " + mode);
         }
     }
 

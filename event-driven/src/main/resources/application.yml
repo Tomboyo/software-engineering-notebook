@@ -10,3 +10,6 @@ spring.cloud:
     request-in-0:
       destination: 'clock'
       group: 'group-0'
+    request-out-0:
+      destination: 'clock'
+      group: 'group-0'
