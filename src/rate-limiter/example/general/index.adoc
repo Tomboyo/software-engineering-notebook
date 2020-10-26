@@ -1,4 +1,10 @@
-= Exploration of general rate-limiter usage
+= General rate-limiter usage
+
+This example demonstrates the behavior of a rate-limiter and how it is configured to deny requests in excess of an acceptable rate.
+
+link:src/main/java[Find the source here].
+
+== Example structure
 
 This example consists of a Spring Boot application utilizing https://github.com/resilience4j/resilience4j[resilience4j] annotations. The application includes a link:src/main/java/com/github/tomboyo/example/PingController.java[REST API] which responds to `GET /` requests after 200 milliseconds and a link:src/main/java/com/github/tomboyo/example/Requester.java[client] which issues such requests on a configurable schedule. The REST API protects itself from excessive use with a resilience4j rate-limiter, which may reject incoming requests before they are serviced:
 
@@ -23,7 +29,7 @@ curl -XPOST 'localhost:8080/requester?delayBetweenRequests=200'
 
 This configures the client to issue a request every 200 milliseconds (five times per second), which is fast enough to exceed the rate limit.
 
-== Run it!
+== Example in action
 
 From the root of this repository, invoke the following:
 

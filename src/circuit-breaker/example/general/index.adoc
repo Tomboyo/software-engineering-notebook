@@ -1,4 +1,10 @@
-= Exploration of general circuit-breaker usage
+= General circuit-breaker usage
+
+This example demonstrates the operation of a circuit breaker as it transitions between the `open`, `half-open`, and `closed` states in response to healthy and unhealthy service response times.
+
+link:src/main/java[Find the source here].
+
+== Example program structure
 
 This example consists of a Spring Boot application utilizing https://github.com/resilience4j/resilience4j[resilience4j] annotations. The application consists of a link:src/main/java/com/github/tomboyo/example/PingController.java[REST API] which responds to `GET /` requests after a configurable delay and a link:src/main/java/com/github/tomboyo/example/Requester.java[client] which issues such requests on a fixed schedule. The client wraps its HTTP calls with a circuit-breaker, which may prevent calls to the REST API from being made on any attempt:
 
@@ -23,7 +29,7 @@ curl localhost:8080/ -H 'Content-Type: application/json' -d '{"delay_millis": 20
 
 By reconfiguring the delay, we may create conditions under which the breaker will trip. For simplicity's sake our server and client run in the same application, but were that not so we could also kill or otherwise crash the server to trip the client's breaker.
 
-== Run it!
+== Example in action
 
 From the root of this repository, invoke the following:
 

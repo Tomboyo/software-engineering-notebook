@@ -1,5 +1,7 @@
 = Rate Limiter
 
+A fault-tolerance primitive that prevents clients of a system from exceeding a sustainable request rate.
+
 Rate-limiters exist to protect services from unsustainable request volumes, such as during spikes in user traffic or denial-of-service attacks (including friendly-fire from misbehaving collaborator services) <<google-cloud>><<stripe>>. While services can utilize rate-limiting to protect themselves from high request volume, they can also use rate-limiting to control the volume of their own requests to unprotected legacy back-ends that are otherwise vulnerable <<google-cloud>>. In either case, rate-limiters deny requests above a certain throughput, shedding load off vulnerable systems, and may even prioritize certain types of requests over others to ensure less-significant systems degrade before more-critical systems <<stripe>>.
 
 Clients of rate-limited systems should respond to rate-limiting intelligently or else risk https://landing.google.com/sre/sre-book/chapters/addressing-cascading-failures/[cascading failures] as errors from one service propagate uncontrolled throughout a network of collaborating services, possibly with self-reinforcing consequences <<google-cloud>>. In order for clients to respond to rate-limiting, services must signal clients when rate-limiting is active, such as by returning error code https://httpstatuses.com/429[429: Too Many Requests] <<getambassador>> during periods of high load. Clients will typically want to re-try rate-limited requests, though they should do so with exponential back-off and jitter to avoid the https://en.wikipedia.org/wiki/Thundering_herd_problem["thundering herd"] problem wherein many clients inadvertently synchronize their requests, sending their combined traffic all at once <<google-cloud>>. As an alternative to rejecting excessive requests, services may be able to enqueue them for asynchronous fulfillment. In this scenario a service would immediately return a job ID to the client in response to their request. The client would know to poll the service or subscribe to an appropriate messaging channel for the response <<resilience4j-ratelimiter>><<google-cloud>>.
@@ -24,12 +26,6 @@ In telecommunications contexts, token buckets are often used to limit the averag
 
 The capacity of a token bucket is represented by `CBS`; clients of the bucket can never request more than `CBS` tokens at a single time. Tokens are returned to the bucket at the rate `CIR`, which by definition means all `CBS` tokens are replenished every interval `T`. Therefore in the worst case, clients can request at most `CBS` tokens every interval `T`, which over the long-term conforms to the desired average request rate `CIR`.
 
-== Examples
-
-* link:example/general/README.adoc[Exploration of general rate-limiter usage.] Built with Java, Resilience4J, and Spring Boot.
-
-* link:example/token-bucket/README.adoc[Implementations of the token bucket rate-limiter algorithm.] Built with Elixir using agents for distributed rate-limiting or atomics for fast local rate-limiting.
-
 [bibliography]
 == References
 - [[[google-cloud, 1]]] "Rate-limiting strategies and techniques." Google Cloud. https://cloud.google.com/solutions/rate-limiting-strategies-techniques (accessed Aug. 8, 2020).
@@ -42,3 +38,13 @@ The capacity of a token bucket is represented by `CBS`; clients of the bucket ca
 - [[[wikipedia-token-bucket, 8]]] "Token bucket." Wikipedia. https://en.wikipedia.org/wiki/Token_bucket (accessed Sep. 7, 2020)
 - [[[science-direct, 9]]] D. Medhi, K. Ramasamy, Network Routing, 2nd ed. Elsevier Inc, 2018, ch. 18.4.2, pp. 626-644. [Online]. Available: https://www.sciencedirect.com/topics/computer-science/token-bucket. Accessed: Sep. 7, 2020.
 - [[[cisco-token-bucket, 10]]] "Policing and Shaping Overview." Cisco Networking Software. https://www.cisco.com/c/en/us/td/docs/ios/qos/configuration/guide/12_2sr/qos_12_2sr_book/polcing_shping_oview.html (accessed Sep 7, 2020).
+
+== Examples
+
+:leveloffset: +2
+
+include::example/general/index.adoc[]
+
+include::example/token-bucket/index.adoc[]
+
+:leveloffset: -2

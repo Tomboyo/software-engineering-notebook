@@ -1,5 +1,9 @@
 = Token Bucket
 
+This example demonstrates multiple implementations of the token-bucket algorithm in Elixir. These are for learning purposes only and their use in a production environment is discouraged.
+
+link:./[Find the source here].
+
 This example implements two token buckets in Elixir. One uses lockless concurrency primitives from the OTP Atomics module to achieve high-throughput intra-node rate-limiting. The other utilizes an Agent process to implement a distributable but substantially slower rate-limiter.
 
 For testing and benchmarking convenience, both implementations adhere to the TokenBucket behavior and TokenBucket.Bucket protocol, defined in link:lib/token_bucket.ex[token_bucket.ex].

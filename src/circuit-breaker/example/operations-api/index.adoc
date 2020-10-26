@@ -1,6 +1,16 @@
-= Circuitbreaker operations REST API
+= Circuit-breaker operations REST API
 
-This example is structurally similar to the link:../general/index.adoc[general exploration], which the reader should be familiar with before proceeding.
+This example demonstrates an operations REST API that can toggle a running application's circuit-breaker between `FORCED_OPEN`, `DISABLED`, and `CLOSED` states in order to deny all traffic, allow all traffic, or resume normal automatic operation, respectively.
+
+link:src/main/java[Find the source here].
+
+== Prerequisites
+
+The reader should be familiar with the <<General circuit-breaker usage,general circuit-breaker usage example>>.
+
+== Example program structure
+
+This example is structurally similar the <<General circuit-breaker usage,general circuit-breaker usage example>>.
 
 This example adds a REST API controller that allows an operator to manipulate the state of the circuit-breaker protecting the `GET /` call (see link:src/main/java/com/github/tomboyo/example/CircuitBreakerController.java[CircuitBreakerController.java]). The API allows the operator to manually change the state of a circuit breaker to one of the `FORCED_OPEN`, `DISABLED`, or `CLOSED` states. While `FORCED_OPEN`, a breaker will deny all traffic. While `DISABLED`, the breaker will instead allow all traffic. In either case the breaker will not change state on its own and must be forced `CLOSED` to resume normal operation.
 
@@ -13,7 +23,7 @@ curl localhost:8080/circuitbreakers/mycircuitbreaker -H 'Content-Type: applicati
 
 NOTE: The resilience4j team is, as of 2020-July-11, https://github.com/resilience4j/resilience4j/pull/1038[working on Spring Boot Actuator support] to expose circuit breaker state transitions to operators via a REST API. This has not yet been released. Our implementation should resemble theirs.
 
-== Run it!
+== Example in action
 
 From the root of this repository, invoke the following:
 
@@ -22,7 +32,7 @@ From the root of this repository, invoke the following:
 ./gradlew -p circuit-breaker/example/operations-api bootRun
 ----
 
-As in the link:../general/index.adoc[general] example, when the application starts, the `Requester`'s circuit breaker is initially in the `CLOSED` state and will therefore allow `GET localhost:8080/` requests through. The controller responds after a 200 ms delay by default, which the Client considers to be a healthy response time. As such, the following healthy logs are initially printed:
+As in the <<General circuit-breaker usage,general circuit-breaker usage example>>, when the application starts, the `Requester`'s circuit breaker is initially in the `CLOSED` state and will therefore allow `GET localhost:8080/` requests through. The controller responds after a 200 ms delay by default, which the Client considers to be a healthy response time. As such, the following healthy logs are initially printed:
 
 ----
 ...

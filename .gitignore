@@ -7,5 +7,6 @@
 
 build/
 bin/
+target/
 
 vscodeworkspace.code-workspace

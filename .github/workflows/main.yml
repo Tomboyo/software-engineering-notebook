@@ -1,0 +1,37 @@
+name: asciidoctor-ghpages
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  asciidoctor-ghpages:
+    runs-on: ubuntu-latest
+    container: asciidoctor/docker-asciidoctor:latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+      - name: Compile asciidoctor
+        run: |
+          asciidoctor -b html -o target/index.html src/index.adoc
+      - name: Commit compiled html
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          git branch -D gh-pages || true      # Wipe out any gh-pages branch
+          git checkout --orphan gh-pages      # Recreate without history
+          git rm -rf --cached .               # Delete source files
+          mv target/* ./                      # Promote target directory to root
+          git add -f index.html               # Add compilation artifacts
+          git commit -m "Publish $GITHUB_SHA" # Commit minimal branch
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          force: true
+        

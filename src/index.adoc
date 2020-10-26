@@ -1,13 +1,18 @@
 = Distributed Programming & Fault Tolerance
+:toc: left
+:toclevels: 4
 
 This repository consists of short essays and programming exercises in the field of distributed programming and fault tolerance.
 
-:toc:
-
 == Topics
 
-* link:circuit-breaker[Circuit breaker], a fault-tolerance primitive that sheds load from struggling subsystems.
-* link:rate-limiter[Rate limiter], a fault-tolerance primitive that prevents clients of a system from exceeding a sustainable request rate.
+:leveloffset: +2
+
+include::circuit-breaker/index.adoc[]
+
+include::rate-limiter/index.adoc[]
+
+:leveloffset: -2
 
 == Useful Libraries
 

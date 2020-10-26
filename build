@@ -1,0 +1,8 @@
+#!/bin/bash
+
+project_root=$(dirname $(realpath $0))
+
+( cd $project_root \
+  && rm -rf ./target \
+  && asciidoctor -b html -o target/index.html src/index.adoc )
+
