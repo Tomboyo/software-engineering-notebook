@@ -1,8 +1,10 @@
 = Circuit-breaker operations REST API
+:example-url: {src-baseurl}/src/circuit-breaker/example/operations-api
+:java-src-url: {example-url}/src/main/java
 
 This example demonstrates an operations REST API that can toggle a running application's circuit-breaker between `FORCED_OPEN`, `DISABLED`, and `CLOSED` states in order to deny all traffic, allow all traffic, or resume normal automatic operation, respectively.
 
-link:src/main/java[Find the source here].
+link:{example-url}[Find the source here].
 
 == Prerequisites
 
@@ -12,7 +14,7 @@ The reader should be familiar with the <<General circuit-breaker usage,general c
 
 This example is structurally similar the <<General circuit-breaker usage,general circuit-breaker usage example>>.
 
-This example adds a REST API controller that allows an operator to manipulate the state of the circuit-breaker protecting the `GET /` call (see link:src/main/java/com/github/tomboyo/example/CircuitBreakerController.java[CircuitBreakerController.java]). The API allows the operator to manually change the state of a circuit breaker to one of the `FORCED_OPEN`, `DISABLED`, or `CLOSED` states. While `FORCED_OPEN`, a breaker will deny all traffic. While `DISABLED`, the breaker will instead allow all traffic. In either case the breaker will not change state on its own and must be forced `CLOSED` to resume normal operation.
+This example adds a REST API controller that allows an operator to manipulate the state of the circuit-breaker protecting the `GET /` call (see link:{java-src-url}/com/github/tomboyo/example/CircuitBreakerController.java[CircuitBreakerController.java]). The API allows the operator to manually change the state of a circuit breaker to one of the `FORCED_OPEN`, `DISABLED`, or `CLOSED` states. While `FORCED_OPEN`, a breaker will deny all traffic. While `DISABLED`, the breaker will instead allow all traffic. In either case the breaker will not change state on its own and must be forced `CLOSED` to resume normal operation.
 
 To change the state of a breaker, make a post request like the following:
 
@@ -81,7 +83,7 @@ This will allow requests through no matter what, and so the requester should go 
 21:39:54.624 INFO  [scheduling-1] com.github.tomboyo.example.Requester: Call OK in 215 ms
 ----
 
-If we then instruct the REST API to take a long time to respond (using the configuration API introduced in the link:../general/index.adoc[general example]),
+If we then instruct the REST API to take a long time to respond (using the configuration API introduced in the <<General circuit-breaker usage,general example>>),
 
 [source, bash]
 ----
