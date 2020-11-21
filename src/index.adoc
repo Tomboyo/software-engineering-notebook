@@ -16,6 +16,8 @@ include::rate-limiter/index.adoc[]
 
 include::retry/index.adoc[]
 
+include::timeout/index.adoc[]
+
 :leveloffset: -2
 
 == Useful Libraries

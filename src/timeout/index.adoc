@@ -1,0 +1,12 @@
+= Timeout
+
+A _timeout_ limits the amount of time one process spends waiting on another <<microsoft>><<ibm>>. When, for example, a web service fails, it may do so without responding to its clients in any way <<microsoft>>. A client could wait indefinitely for a response, but by using a timeout, it can instead assume the service has failed <<microsoft>> and respond to the error with a <<Fallback, fallback (TODO)>> behavior <<ibm>>. By preempting latent requests and using fallback behavior, a client can stay responsive to its own clients and reallocate resources that would otherwise be dedicated to an unresponsive request <<unc>>.
+
+Clients that utilize timeouts must be aware timed-out requests may still succeed in the backing service: An operation can both succeed and time-out <<ibm>>. For example, suppose a web service experiences unusually high load and becomes latent. Though it still successfully handles all requests, it may fail to do so within the configured timeout of its clients. The clients will receive timeouts even though the service completes requests normally.
+
+[bibliography]
+== References
+
+- [[[microsoft, 1]]] L. Lamport, "Using Time Instead of Timeout for Fault-Tolerant Distributed Systems," ACM Transactions on Programming Languages and Systems, Vol. 6, No. 2, pp. 254-280 April 1984. [Online]. https://www.microsoft.com/en-us/research/uploads/prod/2016/12/using-time-Copy.pdf. Accessed: Nov 21, 2020.
+- [[[ibm, 2]]] "Fault Tolerance." IBM Cloud Docs. https://cloud.ibm.com/docs/java?topic=cloud-native-fault-tolerance (Accessed Nov 21, 2020).
+- [[[unc, 3]]] V. Heorhiadi, S. Rajagopalan, H. Jamjoom, M. Reiter,  V. Sekar, "Gremlin: Systematic Resilience Testing of Microservices." [Online]. http://www.cs.unc.edu/~victor/papers/gremlin-icdcs.pdf. Accessed: Nov 21, 2020.
