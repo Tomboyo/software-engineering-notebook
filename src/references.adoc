@@ -6,16 +6,16 @@
 - [[[stripe, 4]]] P. Tarjan. "Scaling your API with rate limiters." Stripe. https://stripe.com/blog/rate-limiters (accessed Aug. 8, 2020).
 - [[[getambassador, 5]]] D. Bryant. "Part 2: rate limiting for API gateways." Ambassador. https://blog.getambassador.io/rate-limiting-for-api-gateways-892310a2da02 (accessed Aug. 8, 2020).
 - [[[resilience4j-ratelimiter, 6]]] "Ratelimiter." Resilience4j. https://resilience4j.readme.io/docs/ratelimiter (accessed Aug. 8, 2020).
-- [[[rfc-2475, 7]]] S. Blake, D. Black, M. Carlson, E. Davies, Z.Wang, W. Weisss. "RFC 2475 - An Architecture for Differentiated Services." IETF Tools. https://tools.ietf.org/html/rfc2475#section-1.2 (accessed Sep. 7, 2020).
+- [[[rfc-2475, 7]]] S. Blake, D. Black, M. Carlson, E. Davies, Z.Wang, W. Weisss. "RFC 2475 - An architecture for differentiated services." IETF Tools. https://tools.ietf.org/html/rfc2475#section-1.2 (accessed Sep. 7, 2020).
 - [[[wikipedia-traffic-policing, 8]]] "Traffic policing (communications)." Wikipedia. https://en.wikipedia.org/wiki/Traffic_policing_(communications) (accessed Sep. 7, 2020).
 - [[[wikipedia-ratelimiting, 9]]] "Rate limiting." Wikipedia. https://en.wikipedia.org/wiki/Rate_limiting (accessed Aug. 8, 2020).
 - [[[wikipedia-token-bucket, 10]]] "Token bucket." Wikipedia. https://en.wikipedia.org/wiki/Token_bucket (accessed Sep. 7, 2020)
 - [[[science-direct, 11]]] D. Medhi, K. Ramasamy, Network Routing, 2nd ed. Elsevier Inc, 2018, ch. 18.4.2, pp. 626-644. [Online]. Available: https://www.sciencedirect.com/topics/computer-science/token-bucket. Accessed: Sep. 7, 2020.
-- [[[cisco-token-bucket, 12]]] "Policing and Shaping Overview." Cisco Networking Software. https://www.cisco.com/c/en/us/td/docs/ios/qos/configuration/guide/12_2sr/qos_12_2sr_book/polcing_shping_oview.html (accessed Sep 7, 2020).
-- [[[amazon, 13]]] https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/
-- [[[azure-patterns-retry, 14]]] https://docs.microsoft.com/en-us/azure/architecture/patterns/retry
-- [[[google, 15]]] https://cloud.google.com/solutions/rate-limiting-strategies-techniques
-- [[[azure, 16]]] https://docs.microsoft.com/en-us/azure/architecture/best-practices/transient-faults
+- [[[cisco-token-bucket, 12]]] "Policing and shaping overview." Cisco Networking Software. https://www.cisco.com/c/en/us/td/docs/ios/qos/configuration/guide/12_2sr/qos_12_2sr_book/polcing_shping_oview.html (accessed Sep 7, 2020).
+- [[[amazon, 13]]] M. Brooker. "Timeouts, retries, and backoff with jitter." Amazon Builder's Library. https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/. (Accessed Nov 11, 2020).
+- [[[azure-patterns-retry, 14]]] C. Bennage et. al. "Retry pattern." Azure Documentation. https://docs.microsoft.com/en-us/azure/architecture/patterns/retry. (Accessed Nov 11, 2020).
+- [[[google, 15]]] "Rate-limiting strategies and techniques." Google Cloud Solutions. https://cloud.google.com/solutions/rate-limiting-strategies-techniques. (Accessed Nov 11, 2020).
+- [[[azure, 16]]] C. Bennate et. al. "Transient fault handling." Azure Documentation. https://docs.microsoft.com/en-us/azure/architecture/best-practices/transient-faults. (Accessed Nov 11, 2020).
 - [[[microsoft, 17]]] L. Lamport, "Using Time Instead of Timeout for Fault-Tolerant Distributed Systems," ACM Transactions on Programming Languages and Systems, Vol. 6, No. 2, pp. 254-280 April 1984. [Online]. https://www.microsoft.com/en-us/research/uploads/prod/2016/12/using-time-Copy.pdf. Accessed: Nov 21, 2020.
-- [[[ibm, 18]]] "Fault Tolerance." IBM Cloud Docs. https://cloud.ibm.com/docs/java?topic=cloud-native-fault-tolerance (Accessed Nov 21, 2020).
+- [[[ibm, 18]]] "Fault tolerance." IBM Cloud Docs. https://cloud.ibm.com/docs/java?topic=cloud-native-fault-tolerance (Accessed Nov 21, 2020).
 - [[[unc, 19]]] V. Heorhiadi, S. Rajagopalan, H. Jamjoom, M. Reiter,  V. Sekar, "Gremlin: Systematic Resilience Testing of Microservices." [Online]. http://www.cs.unc.edu/~victor/papers/gremlin-icdcs.pdf. Accessed: Nov 21, 2020.
