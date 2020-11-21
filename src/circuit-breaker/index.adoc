@@ -10,11 +10,6 @@ In this way a breaker can reduce load on strained subsystems accessed by its pro
 
 A circuit breaker may generate logs, alerts, or other diagnostics when it is tripped, informing operators of possible system degradation, and may even expose an interface to operators which allows them to manually toggle the breaker between states for troubleshooting <<Fowler>>.
 
-[bibliography]
-== References
-- [[[Fowler, 1]]] M. Fowler. "CircuitBreaker." martinFowler.com. https://www.martinfowler.com/bliki/CircuitBreaker.html (accessed June 29, 2020).
-- [[[Netflix, 2]]] B. Christensen. "Fault tolerance in a high volume, distributed system." The Netflix Tech Blog. https://netflixtechblog.com/fault-tolerance-in-a-high-volume-distributed-system-91ab4faae74a (accessed June 29, 2020).
-
 == Examples
 The following sections demonstrate these capabilities of the circuit breaker.
 

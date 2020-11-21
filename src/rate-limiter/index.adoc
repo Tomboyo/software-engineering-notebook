@@ -26,19 +26,6 @@ In telecommunications contexts, token buckets are often used to limit the averag
 
 The capacity of a token bucket is represented by `CBS`; clients of the bucket can never request more than `CBS` tokens at a single time. Tokens are returned to the bucket at the rate `CIR`, which by definition means all `CBS` tokens are replenished every interval `T`. Therefore in the worst case, clients can request at most `CBS` tokens every interval `T`, which over the long-term conforms to the desired average request rate `CIR`.
 
-[bibliography]
-== References
-- [[[google-cloud, 1]]] "Rate-limiting strategies and techniques." Google Cloud. https://cloud.google.com/solutions/rate-limiting-strategies-techniques (accessed Aug. 8, 2020).
-- [[[stripe, 2]]] P. Tarjan. "Scaling your API with rate limiters." Stripe. https://stripe.com/blog/rate-limiters (accessed Aug. 8, 2020).
-- [[[getambassador, 3]]] D. Bryant. "Part 2: rate limiting for API gateways." Ambassador. https://blog.getambassador.io/rate-limiting-for-api-gateways-892310a2da02 (accessed Aug. 8, 2020).
-- [[[resilience4j-ratelimiter, 4]]] "Ratelimiter." Resilience4j. https://resilience4j.readme.io/docs/ratelimiter (accessed Aug. 8, 2020).
-- [[[rfc-2475, 5]]] S. Blake, D. Black, M. Carlson, E. Davies, Z.Wang, W. Weisss. "RFC 2475 - An Architecture for Differentiated Services." IETF Tools. https://tools.ietf.org/html/rfc2475#section-1.2 (accessed Sep. 7, 2020).
-- [[[wikipedia-traffic-policing, 6]]] "Traffic policing (communications)." Wikipedia. https://en.wikipedia.org/wiki/Traffic_policing_(communications) (accessed Sep. 7, 2020).
-- [[[wikipedia-ratelimiting, 7]]] "Rate limiting." Wikipedia. https://en.wikipedia.org/wiki/Rate_limiting (accessed Aug. 8, 2020).
-- [[[wikipedia-token-bucket, 8]]] "Token bucket." Wikipedia. https://en.wikipedia.org/wiki/Token_bucket (accessed Sep. 7, 2020)
-- [[[science-direct, 9]]] D. Medhi, K. Ramasamy, Network Routing, 2nd ed. Elsevier Inc, 2018, ch. 18.4.2, pp. 626-644. [Online]. Available: https://www.sciencedirect.com/topics/computer-science/token-bucket. Accessed: Sep. 7, 2020.
-- [[[cisco-token-bucket, 10]]] "Policing and Shaping Overview." Cisco Networking Software. https://www.cisco.com/c/en/us/td/docs/ios/qos/configuration/guide/12_2sr/qos_12_2sr_book/polcing_shping_oview.html (accessed Sep 7, 2020).
-
 == Examples
 
 :leveloffset: +2
