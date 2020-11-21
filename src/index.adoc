@@ -1,12 +1,12 @@
-= Distributed Programming & Fault Tolerance
+= Software Engineering Notebook
 :toc: left
-:toclevels: 4
+:toclevels: 2
 
 :src-baseurl: https://github.com/Tomboyo/software-engineering-notebook/tree/master
 
-This repository consists of short essays and programming exercises in the field of distributed programming and fault tolerance.
+== Fault Tolerance Patterns
 
-== Topics
+This section consists of essays and examples pertaining to fault tolerance patterns.
 
 :leveloffset: +2
 
