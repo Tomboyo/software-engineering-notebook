@@ -4,19 +4,59 @@ A _Retry_ is a fault tolerance mechanism to help clients make successful request
 
 Retries help clients carry out requests against remote services even when short-lived, "transient" faults might otherwise prevent them from doing so <<amazon>>. These faults, like "the momentary loss of network connectivity to components and services, the temporary unavailability of a service, or timeouts that occur when a service is busy," frequently go away on their own <<azure-patterns-retry>>. If clients re-attempt requests that fail due to these faults, they are therefore likely to eventually succeed <<azure-patterns-retry>>. As a consequence, retry mechanisms improve a client's odds of successfully communicating with a service at the cost of issuing additional requests, which comes with a number of special considerations, outlined below.
 
-== Considerations
+== Design Considerations
 
-* *Load*: Because retry mechanisms send more traffic to services in response to faults, they can place additional strain on already struggling services and hamper recovery <<amazon>><<azure-patterns-retry>>. This is mitigated several ways: by introducing a delay between retry attempts, which evenly distributes load against services <<amazon>><<azure-patterns-retry>>; by limiting the maximum number of retry attempts, thereby shedding load when requests chronically fail <<azure>>; and by protecting APIs with <<Rate Limiter,rate-limiters>> and <<Circuit Breaker,circuit-breakers>> that shed load further when services become chronically unhealthy <<amazon>>. Typically, the delay between retry attempts increases with successive attempts; this is known as _back-off_ <<azure>>, which is discussed further in <<Back-off, (TODO)>>.
+=== Increased and Synchronized Traffic
 
-* *Thundering Herd*: Distributed clients may unintentionally synchronize their retry requests into a https://en.wikipedia.org/wiki/Thundering_herd_problem[thundering herd], wherein many clients issue their retry requests at the same time instead of distributed over an interval. These traffic spikes cause service degradation and additional faults <<amazon>><<google>>. This is mitigated by adding a random component to the delay between requests, known as _jitter_, which spreads otherwise simultaneous requests back out <<amazon>>. Jitter is discussed further in <<Jitter, (TODO)>>.
+Because retry mechanisms send more traffic to services in response to faults, they can place additional strain on already struggling services and hamper recovery <<amazon>><<azure-patterns-retry>>.
 
-* *Idempotence*: It may not be safe to retry failed requests against an API that causes link:https://en.wikipedia.org/wiki/Side_effect_(computer_science)[side effects], such as database state changes. A service might successfully create side effects even when a request fails overall; a subsequent attempt could trigger those effects again <<amazon>><<azure-patterns-retry>>. If repeated side effects are not desirable, design APIs that are link:https://en.wikipedia.org/wiki/Idempotence[idempotent] instead, and only issue retries to idempotent APIs <<amazon>><<azure-patterns-retry>>.
-+
+Retry traffic load is managed using _backoff_, a delay between client retry attempts. These delays help to distribute client retry traffic over time, lessening the risk of overloading a service <<azure-patterns-retry>>. However, retry-with-backoff can generate https://en.wikipedia.org/wiki/Thundering_herd_problem[thundering herds] when many clients synchronize their retry schedule. The resulting waves of traffic can exacerbate service degradation and cause additional faults <<amazon>><<google>>.
+
+These problematic spikes of traffic are smoothed out into more uniform request patterns by further introducing _jitter_, or randomization, to the retry logic <<amazon>><<amazon-2>>. As demonstrated in <<amazon-2>>, randomization prevents clients from synchronizing, producing a uniform rate of request instead.
+
+Even when backoff and jitter are designed into a retry mechanism, the resulting retry traffic may nonetheless exacerbate service providers when they enter a degraded state. Consider instrumenting at-risk services with <<Circuit Breaker, circuit breakers>> <<amazon>><<azure>> or <<Rate Limiter,rate limiters>> <<amazon>> to manage this risk.
+
+.Note
+****
+(TODO) Because backoff distributes request load over time into a near-uniform rate of request, it plays a very similar role to the <<Rate Limiter, rate limiter>>, which enforces a constant request rate from clients by shedding excess requests. At time of writing, I do not have references which indicate how the two differ. 
+
+It may be that rate limiters in the literature are assumed to enforce _static_ rates. Suppose a service with a static rate limiter becomes degraded for some unforseen reason (e.g. database queries are suddenly slow), and that causes the rate at which it can sustainably service requests to drop below the enforced rate. This causes the service to attempt to service more traffic than it can; essentially, the static rate limit no longer reflects the actual capacity of the system, allowing it to further degrade. Retry-with-backoff is _dynamic_ in that the client varies its request rate over time in response to actual service capacity. Therefore retry-with-backoff may serve as a second layer of defence when static rate limiters fail.
+
+Put another way, rate limiters shed load to _prevent_ service degradation, whereas retries-with-backoff slow down in response to observed service load so that services can _recover_.
+
+See Netflix's discussion of link:https://medium.com/@NetflixTechBlog/performance-under-load-3e6fa9a60581[adaptive concurrency limits].
+****
+
+==== Kinds of Backoff
+
+Retries can be made immediately or after a possibly growing delay. While <<amazon-2>> considers exponential backoff to be a good standard, it and many other sources do not identify the properties of different backoff protocols or when best to use them. The choice is ostensibly significant, however, since backoff clearly impacts service load, perceived availability, and perceived responsiveness. For example, the Twitter API instructs developers to use no backoff, linear backoff, and exponential backoff on a case-by-case basis <<twitter>>:
+
+[quote, Twitter API backoff guidelines]
+----
+Once an established connection drops, attempt to reconnect immediately. If the reconnect fails, slow down your reconnect attempts according to the type of error experienced:
+
+- Back off linearly for TCP/IP level network errors. These problems are generally temporary and tend to clear quickly. Increase the delay in reconnects by 250ms each attempt, up to 16 seconds.
+- Back off exponentially for HTTP errors for which reconnecting would be appropriate. Start with a 5 second wait, doubling each attempt, up to 320 seconds.
+- Back off exponentially for HTTP 429 errors `Rate limit exceeded`. Start with a 1 minute wait and double each attempt. Note that every HTTP 429 received increases the time you must wait until rate limiting will no longer be in effect for your account.
+----
+
+=== Client Waiting
+
+Backoff protocols such as _exponential backoff_ grow rapidly and cause clients to wait a long time between requests and overall <<amazon>>. Both <<azure>> and <<amazon>> recommend limiting the maximum delay between requests and the maximum number of retry attempts to avoid undesirable waiting.
+
+=== Idempotence
+
+It may not be safe to retry failed requests against an API that causes link:https://en.wikipedia.org/wiki/Side_effect_(computer_science)[side effects], such as database state changes. A service might successfully create side effects even when a request fails overall; a subsequent attempt could trigger those effects again <<amazon>><<azure-patterns-retry>>. If repeated side effects are not desirable, design APIs that are link:https://en.wikipedia.org/wiki/Idempotence[idempotent] instead, and only issue retries to idempotent APIs <<amazon>><<azure-patterns-retry>>.
+
 .Example
 ****
 Suppose a client issues a bank API request to increment the value of an account by $100. The service successfully increments the value of the account, but the request fails overall due to an unrelated error (e.g. a network error). The client inappropriately retries the request, and as a result, increments the account by $200 cumulatively, not $100 as intended. Because the bank API is not idempotent, it is not safe to retry failed requests against it.
 ****
 
-* *Distributed Systems*: When multiple services within a request path each use retry, a request to a service early in the path can multiply into a substantial number of requests that place additional strain on the service near the end <<amazon>><<azure-patterns-retry>>. For example, if the first service makes 3 retries to the second, which makes 3 retires to the third, the result may be as many as 9 requests to the third service. Limit retry logic to only one point in the stack to avoid the issue <<amazon>>, or only introduce retry when the consequences of failure are well-understood <<azure-patterns-retry>>.
+=== Compounding Retries
 
-* *When to Retry*: Because a Retry only helps a system recover from transient faults, retries must have selective triggers. Retries should generally not trigger in response to client errors (e.g. HTTP 4xx-series responses) since those are unlikely to ever succeed, but generally should trigger in response to server errors (e.g. HTTP 5xx-series responses) because those may succeed on a subsequent attempt <<amazon>>. This is contextual, however; <<azure-patterns-retry,Microsoft>> notes that internal server errors (e.g. HTTP 500 responses) may be caused by business-logic defects, and these types of failures would not succeed on retried attempts. Retry trigger logic is futher complicated in an eventually-consistent environment where otherwise chronic errors may resolve as state propagates throughout a system <<amazon>>.
+When multiple services within a request path each use retry, a request to a service early in the path can multiply into a substantial number of requests that place additional strain on the service near the end <<amazon>><<azure-patterns-retry>>. For example, if the first service makes 3 retries to the second, which makes 3 retires to the third, the result may be as many as 9 requests to the third service. Limit retry logic to only one point in the stack to avoid the issue <<amazon>>, or only introduce retry when the consequences of failure are well-understood <<azure-patterns-retry>>.
+
+=== Transient and Intransient Faults
+
+Because a Retry only helps a system recover from transient faults, retries must have selective triggers. Retries should generally not trigger in response to client errors (e.g. HTTP 4xx-series responses) since those are unlikely to ever succeed, but generally should trigger in response to server errors (e.g. HTTP 5xx-series responses) because those may succeed on a subsequent attempt <<amazon>>. This is contextual, however; <<azure-patterns-retry,Microsoft>> notes that internal server errors (e.g. HTTP 500 responses) may be caused by business-logic defects, and these types of failures would not succeed on retried attempts. Retry trigger logic is further complicated in an eventually-consistent environment where otherwise chronic errors may resolve as state propagates throughout a system <<amazon>>.

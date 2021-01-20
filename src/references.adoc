@@ -19,3 +19,5 @@
 - [[[microsoft, 17]]] L. Lamport, "Using Time Instead of Timeout for Fault-Tolerant Distributed Systems," ACM Transactions on Programming Languages and Systems, Vol. 6, No. 2, pp. 254-280 April 1984. [Online]. https://www.microsoft.com/en-us/research/uploads/prod/2016/12/using-time-Copy.pdf. Accessed: Nov 21, 2020.
 - [[[ibm, 18]]] "Fault tolerance." IBM Cloud Docs. https://cloud.ibm.com/docs/java?topic=cloud-native-fault-tolerance (Accessed Nov 21, 2020).
 - [[[unc, 19]]] V. Heorhiadi, S. Rajagopalan, H. Jamjoom, M. Reiter,  V. Sekar, "Gremlin: Systematic Resilience Testing of Microservices." [Online]. http://www.cs.unc.edu/~victor/papers/gremlin-icdcs.pdf. Accessed: Nov 21, 2020.
+- [[[twitter, 20]]] "Sampled stream." Twitter developer documentation. https://developer.twitter.com/en/docs/twitter-api/tweets/sampled-stream/integrate/handling-disconnections. (Accessed Jan 12, 2021).
+- [[[amazon-2, 21]]] M. Brooker. "Exponential Backoff and Jitter." AWS Architecture Blog. https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/. (Accessed Jan 12, 2021)
