@@ -30,5 +30,5 @@ The capacity of a token bucket is represented by `CBS`; clients of the bucket ca
 
 See the following examples:
 
-- link:examples/rate-limiter/general/index.html[General behavior]
-- link:examples/rate-limiter/token-bucket/index.html[Token buckets]
+- link:examples/rate-limiter/general/example.html[General behavior]
+- link:examples/rate-limiter/token-bucket/example.html[Token buckets]

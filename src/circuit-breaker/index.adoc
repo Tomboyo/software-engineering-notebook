@@ -14,5 +14,5 @@ A circuit breaker may generate logs, alerts, or other diagnostics when it is tri
 
 The following examples demonstrate operation of a circuit breaker.
 
-- link:examples/circuit-breaker/general/index.html[General Usage]
-- link:examples/circuit-breaker/operations-api/index.html[Operations API]
+- link:examples/circuit-breaker/general/example.html[General Usage]
+- link:examples/circuit-breaker/operations-api/example.html[Operations API]
