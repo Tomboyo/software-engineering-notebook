@@ -32,7 +32,7 @@ function compile_adoc {
 
 function move_artifacts_to_target {
   mkdir target
-  mv src/index.html target
+  mv src/*.html target
   find examples -type f -iname "*.html" -exec sh -c '
     mkdir -p "target/${0%/*}"
     mv "$0" "target/$0"
