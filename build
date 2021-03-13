@@ -22,7 +22,7 @@ function main {
 function delete_target_if_exists {
   if [[ -d ./target ]]
   then
-    rm -r --interactive=no ./target
+    rm -rf ./target
   fi
 }
 

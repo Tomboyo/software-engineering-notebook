@@ -25,6 +25,7 @@ jobs:
           git branch -D gh-pages || true      # Wipe out any gh-pages branch
           git checkout --orphan gh-pages      # Recreate without history
           git rm -rf --cached .               # Delete source files
+          find . -maxdepth 1 -not -name 'target' -exec rm -rf {} \;
           mv target/* ./                      # Promote target directory to root
           git add -f index.html               # Add compilation artifacts
           git commit -m "Publish $GITHUB_SHA" # Commit minimal branch
