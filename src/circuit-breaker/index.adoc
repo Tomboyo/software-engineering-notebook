@@ -11,12 +11,8 @@ In this way a breaker can reduce load on strained subsystems accessed by its pro
 A circuit breaker may generate logs, alerts, or other diagnostics when it is tripped, informing operators of possible system degradation, and may even expose an interface to operators which allows them to manually toggle the breaker between states for troubleshooting <<Fowler>>.
 
 == Examples
-The following sections demonstrate these capabilities of the circuit breaker.
 
-:leveloffset: +2
+The following examples demonstrate operation of a circuit breaker.
 
-include::example/general/index.adoc[]
-
-include::example/operations-api/index.adoc[]
-
-:leveloffset: -2
+- link:examples/circuit-breaker/general/index.html[General Usage]
+- link:examples/circuit-breaker/operations-api/index.html[Operations API]

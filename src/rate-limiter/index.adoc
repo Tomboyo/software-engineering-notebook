@@ -28,10 +28,7 @@ The capacity of a token bucket is represented by `CBS`; clients of the bucket ca
 
 == Examples
 
-:leveloffset: +2
+See the following examples:
 
-include::example/general/index.adoc[]
-
-include::example/token-bucket/index.adoc[]
-
-:leveloffset: -2
+- link:examples/rate-limiter/general/index.html[General behavior]
+- link:examples/rate-limiter/token-bucket/index.html[Token buckets]

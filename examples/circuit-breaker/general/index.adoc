@@ -1,6 +1,9 @@
 = General circuit-breaker usage
-:example-url: {src-baseurl}/src/circuit-breaker/example/general
+:github-tree: https://github.com/Tomboyo/software-engineering-notebook/tree/master
+:example-url: {github-tree}/src/circuit-breaker/example/general
 :java-src-url: {example-url}/src/main/java
+
+link:../../../index.html[Back to top.]
 
 This example demonstrates the operation of a circuit breaker as it transitions between the `open`, `half-open`, and `closed` states in response to healthy and unhealthy service response times.
 

@@ -1,8 +1,42 @@
 #!/bin/bash
 
+set -euo pipefail
+
 project_root=$(dirname $(realpath $0))
 
-( cd $project_root \
-  && rm -rf ./target \
-  && asciidoctor -b html -o target/index.html src/index.adoc )
+if [[ -z "${project_root// }" ]]
+then
+  >&2 echo "Could not determine project root"
+  exit 1
+fi
 
+function main {
+  (
+    cd $project_root
+    delete_target_if_exists
+    compile_adoc
+    move_artifacts_to_target
+  )
+}
+
+function delete_target_if_exists {
+  if [[ -d ./target ]]
+  then
+    rm -r --interactive=no ./target
+  fi
+}
+
+function compile_adoc {
+  asciidoctor -b html "src/index.adoc" "examples/**/index.adoc"
+}
+
+function move_artifacts_to_target {
+  mkdir target
+  mv src/index.html target
+  find examples -type f -iname "index.html" -exec sh -c '
+    mkdir -p "target/${0%/*}"
+    mv "$0" "target/$0"
+  ' {} \;
+}
+
+main

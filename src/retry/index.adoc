@@ -31,14 +31,14 @@ See Netflix's discussion of link:https://medium.com/@NetflixTechBlog/performance
 
 Retries can be made immediately or after a possibly growing delay. While <<amazon-2>> considers exponential backoff to be a good standard, it and many other sources do not identify the properties of different backoff protocols or when best to use them. The choice is ostensibly significant, however, since backoff clearly impacts service load, perceived availability, and perceived responsiveness. For example, the Twitter API instructs developers to use no backoff, linear backoff, and exponential backoff on a case-by-case basis <<twitter>>:
 
-[quote, Twitter API backoff guidelines]
-----
+[quote]
+____
 Once an established connection drops, attempt to reconnect immediately. If the reconnect fails, slow down your reconnect attempts according to the type of error experienced:
 
 - Back off linearly for TCP/IP level network errors. These problems are generally temporary and tend to clear quickly. Increase the delay in reconnects by 250ms each attempt, up to 16 seconds.
 - Back off exponentially for HTTP errors for which reconnecting would be appropriate. Start with a 5 second wait, doubling each attempt, up to 320 seconds.
 - Back off exponentially for HTTP 429 errors `Rate limit exceeded`. Start with a 1 minute wait and double each attempt. Note that every HTTP 429 received increases the time you must wait until rate limiting will no longer be in effect for your account.
-----
+____
 
 === Client Waiting
 

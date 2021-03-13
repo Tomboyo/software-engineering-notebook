@@ -2,8 +2,6 @@
 :toc: left
 :toclevels: 2
 
-:src-baseurl: https://github.com/Tomboyo/software-engineering-notebook/tree/master
-
 == Fault Tolerance Patterns
 
 This section consists of essays and examples pertaining to fault tolerance patterns.

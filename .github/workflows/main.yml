@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Compile asciidoctor
         run: |
-          asciidoctor -b html -o target/index.html src/index.adoc
+          ./build
       - name: Commit compiled html
         run: |
           git config --local user.email "action@github.com"
@@ -34,4 +34,3 @@ jobs:
           branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
           force: true
-        

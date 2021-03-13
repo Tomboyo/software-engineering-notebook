@@ -2,6 +2,8 @@
 :example-url: {src-baseurl}/src/rate-limiter/example/general
 :java-src-url: {example-url}/src/main/java
 
+link:../../../index.html[Back to top.]
+
 This example demonstrates the behavior of a rate-limiter and how it is configured to deny requests in excess of an acceptable rate.
 
 link:{example-url}[Find the source here].

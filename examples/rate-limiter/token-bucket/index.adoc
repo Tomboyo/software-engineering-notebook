@@ -2,6 +2,8 @@
 :example-url: {src-baseurl}/src/rate-limiter/example/token-bucket
 :ex-src-url: {example-url}/lib
 
+link:../../../index.html[Back to top.]
+
 This example demonstrates multiple implementations of the token-bucket algorithm in Elixir. These are for learning purposes only and their use in a production environment is discouraged.
 
 link:{example-url}[Find the source here].

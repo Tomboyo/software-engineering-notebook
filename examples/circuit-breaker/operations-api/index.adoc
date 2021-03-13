@@ -1,6 +1,9 @@
 = Circuit-breaker operations REST API
-:example-url: {src-baseurl}/src/circuit-breaker/example/operations-api
+:github-tree: https://github.com/Tomboyo/software-engineering-notebook/tree/master
+:example-url: {github-tree}/src/circuit-breaker/example/operations-api
 :java-src-url: {example-url}/src/main/java
+
+link:../../../index.html[Back to top.]
 
 This example demonstrates an operations REST API that can toggle a running application's circuit-breaker between `FORCED_OPEN`, `DISABLED`, and `CLOSED` states in order to deny all traffic, allow all traffic, or resume normal automatic operation, respectively.
 
