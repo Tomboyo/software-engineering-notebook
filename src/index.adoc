@@ -8,13 +8,13 @@ This section consists of essays and examples pertaining to fault tolerance patte
 
 :leveloffset: +2
 
-include::circuit-breaker/index.adoc[]
+include::circuit-breaker.adoc[]
 
-include::rate-limiter/index.adoc[]
+include::rate-limiter.adoc[]
 
-include::retry/index.adoc[]
+include::retry.adoc[]
 
-include::timeout/index.adoc[]
+include::timeout.adoc[]
 
 include::references.adoc[]
 
