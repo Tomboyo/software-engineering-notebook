@@ -1,0 +1,21 @@
+= Fault Tolerance Patterns
+
+This section consists of essays and examples pertaining to fault tolerance patterns.
+
+:leveloffset: +1
+
+include::circuit-breaker.adoc[]
+
+include::rate-limiter.adoc[]
+
+include::retry.adoc[]
+
+include::timeout.adoc[]
+
+include::references.adoc[]
+
+:leveloffset: -1
+
+== Useful Libraries
+
+* Resilience4J implements a number of useful fault-tolerance mechanisms like circuit breakers, bulkheads, and retry mechanisms. Resilience4j is inspired by Netflix's https://github.com/Netflix/Hystrix[Hystrix] library, which is no longer actively maintained but curates similar configuration-based mechanisms. As stated in the Hystrix README, Netflix is moving away from configuration-heavy strategies employed by Resilience4J and Hystix towards research on https://medium.com/@NetflixTechBlog/performance-under-load-3e6fa9a60581[adaptive concurrency limits].
